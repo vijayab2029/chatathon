@@ -216,23 +216,39 @@ def build_employer_view(team_summary_path=None, team_correlations_path=None):
 
 PART5_OUTPUT_PATH = os.path.join(DATA_DIR, "employer_view.json")
 
-_CATEGORY_DISPLAY_NAMES = {
-    "meeting_density": "Meeting density",
-    "back_to_back_density": "Back-to-back load",
-    "no_agenda_rate": "Agenda hygiene",
-    "after_hours_load": "After-hours load",
-    "lunch_buffer_risk": "Lunch buffer risk",
+_SEVERITY_MAP = {
+    "minimal": "Low",
+    "low": "Low",
+    "moderate": "Moderate",
+    "elevated": "Elevated",
+    "high": "High",
+    "no signal": "Low",
 }
 
 
-def _structural_fact(category, m):
+def load_team_themes(path=None):
+    """Part 3's new employer-safe projection: exactly 5 fixed themes, banded
+    severity/prevalence, deterministic actions. No thresholds, no counts, no
+    magnitudes, no person_id at any depth. This is what Part 4 renders to
+    Part 5 -- NOT the raw pattern list in team_correlations.json, which is
+    Part 4's internal analytical input only (see the employer-view privacy
+    redesign spec, section 4)."""
+    path = path or os.path.join(PART3_OUT_DIR, "team_themes.json")
+    with open(path) as f:
+        return json.load(f)
+
+
+def _theme_to_causal_category(theme):
+    fact = theme["calendar_fact"]
+    if theme.get("protective_fact"):
+        fact = f"{fact} {theme['protective_fact']}"
     return {
-        "meeting_density": f"The team averages {m['avg_daily_meetings_per_person']:.1f} meetings per person per day.",
-        "back_to_back_density": f"{m['pct_meetings_back_to_back']:.1f}% of meetings are scheduled back-to-back with no gap.",
-        "no_agenda_rate": f"{m['pct_meetings_without_agenda']:.1f}% of meetings have no agenda attached.",
-        "after_hours_load": f"{m['pct_meetings_after_hours']:.1f}% of meetings fall outside standard working hours.",
-        "lunch_buffer_risk": f"{m['pct_days_without_lunch_buffer']:.1f}% of days have no contiguous midday break.",
-    }.get(category, "")
+        "category": theme["label"],
+        "structural_fact": fact,
+        "severity_band": _SEVERITY_MAP.get(theme["severity_band"], "Moderate"),
+        "trend": "flat",
+        "recommended_action": theme["action"],
+    }
 
 
 def load_raw_events(path=None):
@@ -274,26 +290,30 @@ def build_meeting_density_heatmap(events, team_size):
     }
 
 
-def build_part5_view(team_summary_path=None, team_correlations_path=None, events_path=None):
-    core = build_employer_view(team_summary_path, team_correlations_path)
+def build_part5_view(team_summary_path=None, team_themes_path=None, events_path=None):
     team_summary = load_team_structural_summary(team_summary_path)
     m = team_summary["metrics"]
+    themes_data = load_team_themes(team_themes_path)
+    team_size = themes_data["n_people_analysed"]
+    below_floor = themes_data.get("below_floor", False)
 
     base = {
         "schema_version": "1.0",
         "_comment": (
-            "SYNTHETIC DATA. Real Part 4 output, gated per team_correlations.json "
-            "and team_structural_summary.json. No opt-in data exists in this "
-            "pipeline by design \u2014 see opt_in_shares below."
+            "SYNTHETIC DATA. Employer view built from Part 3's team_themes.json "
+            "(fixed 5-theme rollup, banded severity/prevalence, no thresholds, "
+            "no counts, no per-person magnitudes -- see the employer-view "
+            "privacy redesign spec). No opt-in data exists in this pipeline by "
+            "design \u2014 see opt_in_shares below."
         ),
         "synthetic": True,
         "team_id": "TEAM-1",
         "team_label": "Demo Team",
         "generated_at": __import__("datetime").date.today().isoformat(),
         "k_anonymity": {
-            "threshold": core["min_team_size"],
-            "team_size": core["team_size"],
-            "satisfied": core["gate_passed"],
+            "threshold": MIN_TEAM_SIZE,
+            "team_size": team_size,
+            "satisfied": not below_floor,
         },
         "opt_in_shares": {
             "count": 0,
@@ -312,56 +332,27 @@ def build_part5_view(team_summary_path=None, team_correlations_path=None, events
             "Counts of affected people below the k-anonymity threshold",
             "Any ranking or comparison between team members",
         ],
+        "structural_summary": {
+            "hero": {
+                "label": "Meetings per person per day",
+                "value": round(m["avg_daily_meetings_per_person"], 1),
+                "unit": "",
+            },
+            "tiles": [
+                {"label": "Meetings without an agenda", "value": round(m["pct_meetings_without_agenda"], 1), "unit": "%"},
+                {"label": "Meetings outside 9am\u20136pm", "value": round(m["pct_meetings_after_hours"], 1), "unit": "%"},
+                {"label": "Days without a lunch buffer", "value": round(m["pct_days_without_lunch_buffer"], 1), "unit": "%"},
+                {"label": "Meetings back-to-back", "value": round(m["pct_meetings_back_to_back"], 1), "unit": "%"},
+            ],
+        },
+        # Fixed 5-row shape, always -- including when below the k floor, per
+        # the redesign spec: "the five themes still render, all at no signal",
+        # so an empty team and a healthy team never look identical by omission.
+        "causal_categories": [_theme_to_causal_category(t) for t in themes_data["themes"]],
     }
-
-    if not core["gate_passed"]:
-        base["structural_summary"] = {"hero": None, "tiles": []}
-        base["meeting_density"] = {"caption": "", "days": [], "blocks": [], "grid": []}
-        base["causal_categories"] = []
-        return base
 
     events = load_raw_events(events_path)
-
-    causal_categories = []
-    for c in core["categories"]:
-        action = _ACTION_LIBRARY.get(c["category"], {}).get(
-            c["severity"], "No action needed this cycle \u2014 continue monitoring."
-        )
-        causal_categories.append({
-            "category": _CATEGORY_DISPLAY_NAMES.get(c["category"], c["category"]),
-            "structural_fact": _structural_fact(c["category"], m),
-            "severity_band": c["severity"].capitalize(),
-            "trend": "flat",
-            "recommended_action": action,
-        })
-
-    for p in core["validated_patterns"]:
-        causal_categories.append({
-            "category": "Validated stress pattern",
-            "structural_fact": p["calendar_fact"],
-            "severity_band": p["severity_band"].capitalize(),
-            "trend": "flat",
-            "recommended_action": (
-                "Discuss this pattern with the team as a scheduling norm, "
-                "not as feedback to an individual."
-            ),
-        })
-
-    base["structural_summary"] = {
-        "hero": {
-            "label": "Meetings per person per day",
-            "value": round(m["avg_daily_meetings_per_person"], 1),
-            "unit": "",
-        },
-        "tiles": [
-            {"label": "Meetings without an agenda", "value": round(m["pct_meetings_without_agenda"], 1), "unit": "%"},
-            {"label": "Meetings outside 9am\u20136pm", "value": round(m["pct_meetings_after_hours"], 1), "unit": "%"},
-            {"label": "Days without a lunch buffer", "value": round(m["pct_days_without_lunch_buffer"], 1), "unit": "%"},
-            {"label": "Meetings back-to-back", "value": round(m["pct_meetings_back_to_back"], 1), "unit": "%"},
-        ],
-    }
-    base["meeting_density"] = build_meeting_density_heatmap(events, core["team_size"])
-    base["causal_categories"] = causal_categories
+    base["meeting_density"] = build_meeting_density_heatmap(events, team_size)
     return base
 
 

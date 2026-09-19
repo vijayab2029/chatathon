@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Connect the services to the website.
 
-The site (`ui/`) reads exactly two files and nothing else:
+The site (`part5/ui/`) reads exactly two files and nothing else:
 
     data/employee_insight.json   private, one person, full detail
     data/employer_view.json      aggregate, k-gated, no person dimension
@@ -10,16 +10,16 @@ This script is the only thing that writes them. It runs the real pipeline
 end to end so the site is wired to Part 1/Part 2's actual output rather
 than to Part 3's test fixtures:
 
-    Part 1/2 data  ->  Part 3 pipeline  ->  Part 4 gate  ->  data/*.json  ->  ui/
+    Part 1/2 data  ->  Part 3 pipeline  ->  Part 4 gate  ->  data/*.json  ->  part5/ui/
 
     python scripts/part5_site/build_site_data.py
 
 ALL DATA IS SIMULATED. No real person is represented anywhere in this repo.
 
-Only `data/*.json` is written. Nothing under `ui/` is touched -- the site is
+Only `data/*.json` is written. Nothing under `part5/ui/` is touched -- the site is
 another owner's deliverable and we connect to it, we do not edit it. Pass
 `--fallback` to additionally run the site owner's own inlining generator
-(`node ui/build-fallback.mjs`), which refreshes `ui/fallback-data.js` so the
+(`node part5/ui/build-fallback.mjs`), which refreshes its `fallback-data.js` so the
 demo also works when index.html is opened over file://.
 """
 
@@ -38,6 +38,7 @@ REPO = Path(__file__).resolve().parents[2]
 DATA = REPO / "data"
 PART3_SRC = REPO / "part3" / "src"
 PART3_OUT = REPO / "part3" / "data" / "out"
+UI_DIR = REPO / "part5" / "ui"
 
 STRESS_CSV = DATA / "stress_scores.csv"
 MEETINGS_JSON = DATA / "meeting_features.json"
@@ -49,7 +50,7 @@ EMPLOYER_OUT = DATA / "employer_view.json"
 # 65% to 34.6% across four weeks while the protected calendars hold at 78%.
 DEFAULT_PERSON = "user_101"
 
-# ui/index.html hardcodes "What your 14 days look like" and app.js prints
+# part5/ui/index.html hardcodes "What your 14 days look like" and app.js prints
 # "vs your 14-day average", so the trend ships the last 14 days. Part 3 still
 # detects patterns across all 28, so the chronic term is not lost -- it is
 # just not the thing being plotted.
@@ -143,7 +144,7 @@ def _meetings_by_date(person_id: str) -> dict[str, int]:
 
 
 def _band(score: float) -> str:
-    """Bands use the site's own vocabulary (see SEVERITY in ui/app.js)."""
+    """Bands use the site's own vocabulary (see SEVERITY in part5/ui/app.js)."""
     if score < 35:
         return "Low"
     if score < 55:
@@ -341,7 +342,7 @@ def main() -> int:
     ap.add_argument("--skip-part3", action="store_true",
                     help="reuse part3/data/out/ instead of re-running the pipeline")
     ap.add_argument("--fallback", action="store_true",
-                    help="also run `node ui/build-fallback.mjs` (writes ui/fallback-data.js)")
+                    help="also run `node part5/ui/build-fallback.mjs`")
     args = ap.parse_args()
 
     if args.skip_part3:
@@ -361,9 +362,9 @@ def main() -> int:
           f"score {employee['current']['stress_score']} -> {EMPLOYEE_OUT}")
 
     if args.fallback:
-        subprocess.run(["node", str(REPO / "ui" / "build-fallback.mjs")], check=True)
+        subprocess.run(["node", str(UI_DIR / "build-fallback.mjs")], check=True)
 
-    print("\nServe it:  ./serve.sh   then open http://localhost:8080/ui/")
+    print("\nServe it:  ./serve.sh   then open http://localhost:8080/part5/ui/")
     return 0
 
 

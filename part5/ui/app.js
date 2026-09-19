@@ -727,8 +727,8 @@ function renderEmployer(d, teamSize) {
 async function load() {
   try {
     const [a, b] = await Promise.all([
-      fetch('../data/employee_insight.json').then(r => r.ok ? r.json() : Promise.reject()),
-      fetch('../data/employer_view.json').then(r => r.ok ? r.json() : Promise.reject()),
+      fetch('../../data/employee_insight.json').then(r => r.ok ? r.json() : Promise.reject()),
+      fetch('../../data/employer_view.json').then(r => r.ok ? r.json() : Promise.reject()),
     ]);
     return { employee: a, employer: b, live: true };
   } catch {

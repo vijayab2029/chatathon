@@ -1,4 +1,4 @@
-"""Contract test: does data/*.json carry what ui/app.js actually dereferences?
+"""Contract test: does data/*.json carry what part5/ui/app.js actually dereferences?
 
 The site and the pipeline are owned by different people and connected only by
 two JSON files. Nothing else in the repo fails when they drift -- the page
@@ -37,13 +37,13 @@ def employer() -> dict:
 
 def test_employee_header_fields(employee):
     for key in ("display_name", "person_id", "generated_at"):
-        assert employee[key], f"ui/app.js prints {key} in the hero card"
+        assert employee[key], f"part5/ui/app.js prints {key} in the hero card"
 
 
 def test_employee_current_block(employee):
     cur = employee["current"]
     assert isinstance(cur["stress_score"], int)
-    # SEVERITY in ui/app.js keys its icons and colours off exactly these.
+    # SEVERITY in part5/ui/app.js keys its icons and colours off exactly these.
     assert cur["band"] in {"Low", "Moderate", "Elevated", "High"}
     assert cur["delta_vs_baseline"] == cur["stress_score"] - cur["baseline_14d"]
 
@@ -57,7 +57,7 @@ def test_biometric_tiles_render(employee):
 
 def test_trend_matches_the_hardcoded_14_day_copy(employee):
     trend = employee["trend"]
-    assert len(trend) == 14, "ui/index.html says 'What your 14 days look like'"
+    assert len(trend) == 14, "part5/ui/index.html says 'What your 14 days look like'"
     for point in trend:
         # drawTrend() shades weekends off this exact spelling.
         assert point["weekday"] in {"Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"}

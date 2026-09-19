@@ -10,11 +10,11 @@ and [`docs/superpowers/specs/`](docs/superpowers/specs/) for the design spec.
 
 ## Building the site's data
 
-The website (`ui/`) reads exactly two files, and one script writes both:
+The website (`part5/ui/`) reads exactly two files, and one script writes both:
 
 ```bash
 python scripts/part5_site/build_site_data.py
-./serve.sh        # then open http://localhost:8080/ui/
+./serve.sh        # then open http://localhost:8080/part5/ui/
 ```
 
 That runs the real chain — Part 1/2's `data/` → Part 3's pipeline → Part 4's
@@ -29,10 +29,10 @@ Useful flags:
 | `--person user_104` | whose private view to build (default `user_101`, the trajectory case) |
 | `--skip-part3` | reuse `part3/data/out/` instead of re-running the engine |
 | `--llm` | use the OpenAI agents instead of deterministic narration |
-| `--fallback` | also run `node ui/build-fallback.mjs`, so the demo works over `file://` |
+| `--fallback` | also run `node part5/ui/build-fallback.mjs`, so the demo works over `file://` |
 
 `scripts/part5_site/test_site_contract.py` asserts the generated JSON carries
-every field `ui/app.js` actually dereferences. Nothing else in the repo fails
+every field `part5/ui/app.js` actually dereferences. Nothing else in the repo fails
 when the site and the pipeline drift — the page just renders `undefined` —
 so run it after changing either side:
 
@@ -40,7 +40,7 @@ so run it after changing either side:
 python -m pytest scripts/part5_site/test_site_contract.py
 ```
 
-Nothing under `ui/` is written unless you pass `--fallback`. The site is
+Nothing under `part5/ui/` is written unless you pass `--fallback`. The site is
 another owner's deliverable; we connect to it.
 
 ## LLM provider configuration
