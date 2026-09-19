@@ -249,6 +249,70 @@ class TeamPattern:
         return asdict(self)
 
 
+# --------------------------------------------------------------------------
+# Part 3 -> Part 4/5 employer view (NON-PERSONAL, theme-level)
+# --------------------------------------------------------------------------
+
+# Coarse reach of a theme across the team. Never a count: a raw "5 of 12",
+# combined with what a manager already knows about who is busy, narrows the
+# field further than a band does.
+PREVALENCE_BANDS = ("none", "some", "about half", "most")
+
+# Severity vocabulary, plus the reading a theme gets when nothing cleared the
+# k-anonymity gate for it.
+NO_SIGNAL = "no signal"
+
+
+@dataclass
+class TeamTheme:
+    """One schedule theme in the employer view.
+
+    CRITICAL: like TeamPattern this carries no person_id, and unlike
+    TeamPattern it carries no magnitudes and no counts either. `max_lift_points`
+    is always one identifiable person's number -- there is no k at which the
+    maximum of a set stops being a single member of it -- and an exact
+    n_people_affected is a re-identification aid on a team a manager knows.
+    Both are deliberately absent, not scrubbed downstream.
+
+    The five themes are FIXED and all five are always emitted, including those
+    reading `no signal`. Which themes appear must carry no information: a
+    variable-length list of whatever happened to pass is itself a channel, and
+    it was how "eight patterns describing one person's week" reached an
+    employer in the first place.
+    """
+
+    theme_id: str
+    label: str
+    severity_band: str          # SEVERITY_BANDS, or NO_SIGNAL
+    prevalence_band: str        # PREVALENCE_BANDS
+    calendar_fact: str          # employer-safe: subject is the schedule
+    protective_fact: str | None  # a shape associated with LOWER strain
+    action: str                 # process to change, never a person to check on
+    verify_metric: str          # what to re-measure next cycle
+
+    def to_dict(self) -> dict[str, Any]:
+        return asdict(self)
+
+
+@dataclass
+class TeamThemeView:
+    """The employer-facing projection. Part 3 -> Part 4 -> Part 5.
+
+    `below_floor` distinguishes "this team is too small to report on" from
+    "this team has no problems". Emitting nothing in the first case would make
+    the two indistinguishable and would break the fixed-shape guarantee above,
+    so the five themes still render, all at `no signal`.
+    """
+
+    n_people_analysed: int
+    date_range: tuple[str, str]
+    themes: list[dict[str, Any]]
+    below_floor: bool = False
+    gating_note: str = ""
+    data_provenance: str = "SIMULATED"
+    synthetic: bool = True
+
+
 @dataclass
 class TeamCorrelations:
     """Ungated by design. Part 4 owns the k-anonymity policy; Part 3 hands it

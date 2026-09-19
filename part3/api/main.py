@@ -43,6 +43,7 @@ MEETINGS_JSON = FIXTURES_DIR / "meeting_features.json"
 EMPLOYEE_JSON = OUT_DIR / "employee_insight.json"
 TEAM_JSON = OUT_DIR / "team_correlations.json"
 RAW_TEAM_JSON = OUT_DIR / "team_correlations_raw.json"
+THEMES_JSON = OUT_DIR / "team_themes.json"
 
 app = FastAPI(
     title="Part 3 -- Correlation & Insight Engine (SIMULATED DATA)",
@@ -142,14 +143,23 @@ def employee(person_id: str) -> dict[str, Any]:
 
 @app.get("/team/correlations")
 def team_correlations(raw: bool = False) -> dict[str, Any]:
-    """Person-free team aggregate.
+    """Person-free team aggregate. PART 4'S ANALYTICAL INPUT, not an employer view.
 
-    Default is GATED at k>=5: patterns covering fewer than five distinct people
-    are withheld, and the count withheld is reported rather than hidden.
+    Default is GATED at k>=5 on BOTH conditions: the team must carry at least
+    five people, AND each published pattern must cover at least five of them.
+    Team size alone is half a control -- a 12-person team clears the floor
+    while its single-person patterns sail through. Which rule ran, and how much
+    it withheld, is reported in `gating_note`.
 
-    `?raw=true` returns ungated counts. That is Part 4's input -- it needs the
-    honest numbers to apply the authoritative policy -- but it must be asked
-    for explicitly so that no employer-facing surface gets it by accident.
+    `max_lift_points` is absent here by design: the maximum of a set is a
+    member of that set, so it is always one identifiable person's number.
+
+    `?raw=true` returns the ungated rollup with full counts and magnitudes, for
+    Part 4 only.
+
+    **For an employer-facing view, use `/team/themes`.** This endpoint returns
+    a variable-length list of patterns, and the length and membership of that
+    list is itself a disclosure channel. See themes.py.
     """
     if raw:
         payload = _read_json(RAW_TEAM_JSON)
@@ -159,3 +169,23 @@ def team_correlations(raw: bool = False) -> dict[str, Any]:
         )
         return payload
     return _read_json(TEAM_JSON)
+
+
+@app.get("/team/themes")
+def team_themes() -> dict[str, Any]:
+    """THE EMPLOYER VIEW. Five fixed schedule themes, bands, and actions.
+
+    Safe to render to a manager. It carries no person_id, no lift magnitudes,
+    no people counts and no per-day series -- severity and prevalence are
+    strings from closed vocabularies, so there is no number for a UI to plot
+    and no timeline for it to draw.
+
+    The five themes are always present in the same order, including those
+    reading `no signal`. A variable-length list of whatever happened to clear
+    the gate would let a reader infer content from the shape of the list.
+
+    `below_floor: true` means the team is under the k floor; the themes still
+    render at `no signal` so that "too small to report on" stays
+    distinguishable from "nothing to report".
+    """
+    return _read_json(THEMES_JSON)

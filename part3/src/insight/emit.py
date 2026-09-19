@@ -355,6 +355,25 @@ def aggregate_team_patterns(
 # writing
 # ---------------------------------------------------------------------------
 
+def _strip_max_lift(payload: Any) -> Any:
+    """Remove `max_lift_points` from the gated artifact.
+
+    The maximum of a set is a member of that set, so `max_lift_points` is
+    always one identifiable person's number -- at k=5 just as much as at k=1.
+    It stays in team_correlations_raw.json, which is Part 4's input and is
+    already documented as ungated and not for employer eyes.
+    """
+    if isinstance(payload, dict):
+        return {
+            k: _strip_max_lift(v)
+            for k, v in payload.items()
+            if k != "max_lift_points"
+        }
+    if isinstance(payload, list):
+        return [_strip_max_lift(v) for v in payload]
+    return payload
+
+
 def write_outputs(
     employee_insights: Iterable[EmployeeInsight] | Mapping[str, EmployeeInsight],
     team_correlations: TeamCorrelations,
@@ -388,20 +407,38 @@ def write_outputs(
         json.dumps(employee_doc, indent=2, ensure_ascii=False), encoding="utf-8"
     )
 
-    # The plain filename gets the SAFE artifact and the ungated one has to be
+    # The plain filename gets the gated artifact and the ungated one has to be
     # asked for by name. Anyone wiring an employer view without reading the docs
-    # lands on the gated file by default. Part 4 reads the _raw file and applies
-    # its own authoritative policy. See gating.py and spec section 3.1.
-    from .gating import apply_k_anonymity
+    # lands on the gated file by default. The gate is a team-size floor only, so
+    # above k the two files carry the same patterns and differ in gating_applied
+    # / gating_note. Part 4 reads the _raw file and applies its own authoritative
+    # policy, including any cell-level suppression. See gating.py, spec 3.1.
+    from .gating import DEFAULT_K, apply_k_anonymity
+    from .themes import roll_up_themes
 
     raw_path = out / "team_correlations_raw.json"
     raw_path.write_text(
         json.dumps(_jsonable(team_correlations), indent=2, ensure_ascii=False),
         encoding="utf-8",
     )
+
+    gated = apply_k_anonymity(team_correlations)
     team_path.write_text(
-        json.dumps(_jsonable(apply_k_anonymity(team_correlations)), indent=2,
-                   ensure_ascii=False),
+        json.dumps(_strip_max_lift(_jsonable(gated)), indent=2, ensure_ascii=False),
+        encoding="utf-8",
+    )
+
+    # The employer VIEW. Built from the gated rollup, never from the raw one.
+    # See themes.py for why the employer's unit of record is a theme and not a
+    # pattern: the length and membership of a pattern list is itself a channel.
+    below_floor = team_correlations.n_people_analysed < DEFAULT_K
+    themes_path = out / "team_themes.json"
+    themes_path.write_text(
+        json.dumps(
+            _jsonable(roll_up_themes(gated, below_floor=below_floor)),
+            indent=2,
+            ensure_ascii=False,
+        ),
         encoding="utf-8",
     )
     return employee_path, team_path

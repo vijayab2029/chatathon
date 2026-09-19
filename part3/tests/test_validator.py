@@ -389,8 +389,12 @@ def test_baseline_set_is_deterministic_and_covers_required_claims():
         ("back_to_back_blocks", ">=", 2.0, 1),
         ("after_hours_meetings", ">=", 1.0, 1),
         ("no_agenda_meetings", ">=", 2.0, 1),
-        ("meeting_count", ">=", 5.0, 0),
-        ("meeting_count", ">=", 5.0, 1),
+        # 5 -> 4: curated thresholds snap onto the shared ladder like every
+        # other threshold in the system. A curated 5 sitting one rung away from
+        # an adaptive 4 would split the very people the ladder exists to merge.
+        # See hypotheses.THRESHOLD_LADDER.
+        ("meeting_count", ">=", 4.0, 0),
+        ("meeting_count", ">=", 4.0, 1),
         ("large_meetings", ">=", 1.0, 1),
         ("negative_sentiment_meetings", ">=", 1.0, 1),
         ("has_lunch_buffer", "==", 0.0, 0),

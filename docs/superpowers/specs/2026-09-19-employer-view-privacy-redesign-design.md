@@ -71,11 +71,75 @@ first one masks it:
    prevalence, and the k-gate suppresses real shared patterns as though they
    were individual ones.
 
-The second consequence is the important one. It means the existing gate is
-simultaneously **too weak** — the rows that survive still carry fingerprint
-decimals and one-person magnitudes — and **too strong**, because it destroys
-genuine aggregates. Tuning `k` cannot fix either. The fix has to move upstream
-of the grouping key.
+### 1.2b Correction: the dominant cause was somewhere else
+
+*Added after implementing §2.1. The diagnosis above is real but was not the
+main driver, and the ladder alone changed the coverage histogram not at all.*
+
+`aggregate_team_patterns` was being fed `res["patterns"]` — which is
+`_dedupe_by_feature(survivors)[:n_patterns]`, **each person's narrative top 3,
+one per feature**. The team rollup therefore never saw what was statistically
+true for a person, only what was most worth *telling* them. A pattern true for
+nine people but ranked fourth for most of them arrived at the gate looking as
+though it covered two.
+
+Measured on the 12-person fixtures:
+
+| Aggregation input | distinct patterns | clearing `k=5` | max coverage | fingerprint thresholds |
+|---|---|---|---|---|
+| top-3, no ladder (**what shipped**) | 22 | **0** | 3 | 5 |
+| all validated, no ladder | 108 | 25 | 11 | 29 |
+| all validated + ladder | 45 | **30** | 11 | **0** |
+
+The shared team signal was present all along and was discarded before the gate
+ever ran:
+
+```
+11/12 people   no_agenda_meetings  >= 1  (next day)
+11/12 people   context_switches    >= 2  (next day)
+10/12 people   back_to_back_blocks >= 1  (next day)
+```
+
+So there are two fixes, not one, and the larger is the cheaper:
+
+1. **Feed the rollup every passing validated pattern** (§2.0). This is what
+   takes `k=5`-clearing patterns from 0 to 30.
+2. **Bin the thresholds** (§2.1). This is what removes the fingerprints, and it
+   also consolidates 108 patterns into 45 while *raising* the clearing count
+   from 25 to 30.
+
+Neither is sufficient alone. The ladder without fix 1 leaves the employer view
+empty; fix 1 without the ladder publishes 29 fingerprint thresholds.
+
+### 1.2c Why the gate looked like the problem
+
+The existing gate is simultaneously **too weak** — the rows that survive carry
+fingerprint decimals and one-person magnitudes — and **too strong**, because it
+suppresses aggregates that were only ever deflated by §1.2 and §1.2b. Tuning
+`k` fixes neither. Both fixes are upstream of the gate.
+
+This matters because the gate had already been *loosened* in response: cell
+suppression was removed at one point, on the reasoning that it emptied the
+employer view. That reasoning was correct at the time and is obsolete now. With
+both fixes in place the same fixtures yield 18 published patterns, so
+suppression no longer costs a working feature and both conditions are enforced
+again.
+
+### 2.0 Feed the rollup everything that validated
+
+`analyse_person` now returns two pattern lists, and the distinction is the
+point:
+
+| Key | Contents | Consumer |
+|---|---|---|
+| `patterns` | narrative top 3, one per feature | the employee's insight text |
+| `team_patterns` | every pattern that passed validation | `aggregate_team_patterns` |
+
+Conflating the two is what deflated every `n_people_affected` count. "Most
+worth telling this person" and "statistically true for this person" are
+different questions, and only the second one belongs in an aggregate.
+
+The employee view is unchanged: they still see their top 3.
 
 ### 1.3 The residual leak the gate cannot reach
 
@@ -139,11 +203,19 @@ that merges people rather than splitting them.
 Snapping runs **before** the existing `_dedupe_key` pass, so two cuts from one
 person that land on the same rung collapse to one hypothesis for free.
 
-**Accepted cost.** Some hypotheses that passed at a bespoke cut will fail at a
-ladder rung — the support floor or the p-value gate will reject them. That is a
-real loss of sensitivity, traded for thresholds that merge and do not identify.
-The implementation must report the before/after pass count so the size of the
-trade is a measured number rather than an assumption.
+**Accepted cost, now measured.** Some hypotheses that passed at a bespoke cut
+fail at a ladder rung. Across the 12-person fixture set:
+
+- hypotheses tested: 627 → 524
+- per-person patterns passing validation: **337 → 277 (−18%)**
+- team patterns clearing `k=5`: **25 → 30 (+5)**
+- fingerprint thresholds: **29 → 0**
+
+Individual sensitivity drops by about a fifth, and team-level coverage goes
+*up*, because the survivors share grouping keys instead of sitting one decimal
+apart. That is a favourable trade rather than a neutral one, but the loss on
+the employee side is real and is the reason the employee view keeps its full
+per-person detail rather than being rebuilt on laddered patterns alone.
 
 ### 2.2 Roll patterns into five fixed themes
 
@@ -255,7 +327,24 @@ Recorded here so the owner knows they hold them:
    which invites exactly the alignment the payload design prevents.
 2. **`SIMULATED DATA` label on both views**, per the repo README.
 
-### 3.2 Retained against advice
+### 3.2 Schedule numbers survive in prose, deliberately
+
+The rule "no exact magnitudes" applies to **stress magnitudes and people
+counts**, not to schedule thresholds. `calendar_fact` still reads *"Days with
+2+ meetings booked without an agenda are followed by measurably higher
+strain."*
+
+Stripping the `2+` would have made the employer view unactionable — "meeting
+hygiene is elevated" gives a manager nothing to do. The number is safe for a
+different reason than the others: it is a shared ladder rung covering 11 of 12
+people, not a value derived from anyone's distribution. That safety is
+conditional on §2.1 holding, so `test_any_number_in_employer_text_is_a_shared_ladder_rung`
+asserts it directly against the data-derived fields, rather than trusting it.
+
+What stays out: lift points, `n_people_affected`, `max_lift_points`, p-values,
+per-day rows.
+
+### 3.3 Retained against advice
 
 `date_range` stays in the employer payload. A date range combined with a
 manager's memory of the calendar is a re-identification vector, and the
@@ -329,3 +418,17 @@ moment any per-person value finds a path into the employer payload.
   inference; it does not make the team unobservable.
 - **Part 4 still owns the authoritative policy.** Everything here is a safe
   default, so that the accidental path is the safe path.
+
+- **`team_correlations.json` publishes a median threshold that nothing was
+  tested at.** `aggregate_team_patterns` now groups on `(feature, lag_days)`
+  and publishes the median cut point across the group, so a row's
+  `mean_lift_points` mixes lifts measured at different rungs. This is a real
+  honesty gap of the kind §2.1 was written to avoid, and it is confined to
+  Part 4's analytical input: the employer *view* carries no thresholds tied to
+  magnitudes and no lift points at all, so nothing reaches a manager that a
+  test did not produce. Worth closing if Part 4 starts quoting those numbers
+  directly.
+
+- **The employee view was not re-examined.** It is unchanged by design — the
+  person owns their own data — but nothing here audits what Part 5 does with
+  it, and §3.1's two obligations remain unenforceable from this repo.

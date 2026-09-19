@@ -20,25 +20,62 @@ still works with the API key removed — see `--offline`.
 
 ## THE PRIVACY CONTRACT
 
-| | `data/out/employee_insight.json` | `data/out/team_correlations.json` |
-| --- | --- | --- |
-| Unit of record | one **person** | one **pattern** |
-| `person_id` | **yes, by design** | **never — not at any nesting depth** |
-| Contains | stress trend, top validated patterns with full evidence, insight text, suggested action, critic log | feature/operator/threshold, `n_people_affected`, mean & max lift, severity band, employer-safe `calendar_fact` |
-| Gated? | n/a | **No. `gating_applied: false`.** Part 4 owns the k>=5 floor. |
-| Audience | that employee only (Part 5) | Part 4 → employer view |
+Three artifacts, three audiences. The employer never sees the middle column.
 
-The team file is built by **aggregating across people**
-(`emit.aggregate_team_patterns`), never by concatenating individual insights —
-concatenating individual insights would let a manager re-identify people from
-calendar specifics ("the one with the 07:30 external call on Tuesday"), turning
-an anonymised team signal back into surveillance of a named employee. Person ids
-enter `aggregate_team_patterns` only as dict keys, used to count *distinct*
-people, and are dropped before any `TeamPattern` is constructed.
+| | `employee_insight.json` | `team_correlations.json` | `team_themes.json` |
+| --- | --- | --- | --- |
+| Unit of record | one **person** | one **pattern** | one **schedule theme** |
+| `person_id` | **yes, by design** | **never, at any depth** | **never, at any depth** |
+| Contains | stress trend, top validated patterns with full evidence, insight text, suggested action, critic log | feature/operator/threshold, `n_people_affected`, mean lift, severity band, `calendar_fact` | severity band, prevalence band, `calendar_fact`, optional `protective_fact`, action, verify metric |
+| Magnitudes | exact | mean lift only (`max_lift_points` removed) | **none** |
+| Row count | varies | varies | **always exactly 5** |
+| Gated? | n/a | **k>=5 on both conditions**: team size AND per-pattern coverage | built from the gated rollup |
+| Audience | that employee only (Part 5) | **Part 4 only** — analytical input | **the employer view** (Part 4 → Part 5) |
 
-Part 3 hands Part 4 **honest counts, including counts below the k floor**.
-Suppression is policy; policy is Part 4's job. One module owns analytics, one
-owns policy. `part3/tests/test_privacy.py` enforces all of this.
+### Why three files and not two
+
+`team_correlations.json` is gated and person-free, and is still **not an
+employer view**. Its length and membership vary with the data, and that
+variation is itself a channel: eight rows sharing `lag_days: 1` with near
+identical lifts is one person's week enumerated eight ways. No amount of
+scrubbing the individual rows removes the shape of the list they sit in.
+
+`team_themes.json` emits the same five themes, in the same order, for every
+team on every run — including themes reading `no signal`. Set membership then
+carries no information, because the set never changes. It also carries no
+magnitudes, no counts and no per-day series, which is what stops the employer
+SCREEN from resembling the employee screen: Part 5 cannot draw a stress
+timeline from a payload that contains no timeline.
+
+`max_lift_points` is absent from both employer-facing files. The maximum of a
+set is a member of that set, so it is always one identifiable person's number —
+at k=5 exactly as much as at k=1.
+
+### How the counts stopped lying
+
+`aggregate_team_patterns` receives **every pattern that passed validation** for
+each person, not the narrative top 3 they are shown. Feeding it the top 3
+conflated "most worth telling this person" with "true for this person": a
+pattern true for 11 of 12 people but ranked fourth for most of them arrived at
+the gate looking as though it covered 2, and was suppressed as an individual.
+
+Adaptive thresholds are snapped to a shared ladder (`hypotheses.THRESHOLD_LADDER`)
+**before validation**, so people with the same problem share a grouping key
+instead of each getting a private cut point like `focus_time_minutes >= 407.5`.
+Binning after validation would have been worse than not binning: the published
+threshold would no longer be the one the statistics were computed against.
+
+On the 12-person fixtures those two changes take patterns clearing k=5 from
+**0 to 30**, and fingerprint thresholds from **29 to 0**. Cell suppression had
+been removed at one point because it emptied the employer view; with the counts
+fixed there is no longer a trade to make, and both gate conditions are enforced.
+
+Person ids enter `aggregate_team_patterns` only as dict keys, used to count
+*distinct* people, and are dropped before any `TeamPattern` is constructed.
+`tests/test_privacy.py`, `tests/test_themes.py` and `tests/test_thresholds.py`
+enforce all of this.
+
+See `docs/superpowers/specs/2026-09-19-employer-view-privacy-redesign-design.md`.
 
 ## The 4-agent pipeline
 
@@ -203,7 +240,7 @@ substring `diagnos`, so the offline template's own disclaimer ("…not a
 diagnosis") self-flags. Known false positive in `llm/agent_critic.py`; the text
 is unchanged, since `revised_text` equals `original_text`.
 
-### `data/out/team_correlations.json` — NO `person_id`, ungated
+### `data/out/team_correlations.json` — NO `person_id`, team-size gated
 
 ```json
 {
@@ -224,8 +261,8 @@ is unchanged, since `revised_text` equals `original_text`.
       "calendar_fact": "Days with 2+ meetings booked without an agenda are followed by measurably higher strain."
     }
   ],
-  "gating_applied": false,
-  "gating_note": "Part 3 applies no k-anonymity gate. Part 4 must enforce the k>=5 floor before any of this reaches an employer view.",
+  "gating_applied": true,
+  "gating_note": "k-anonymity gate applied at k=5: team has 12 people, at or above the floor, so all 9 pattern(s) are published. The gate is a team-size floor only -- it does not suppress patterns by how many people they cover. Each pattern reports its own n_people_affected; Part 4 owns any cell-level suppression policy.",
   "data_provenance": "SIMULATED",
   "synthetic": true
 }
@@ -241,10 +278,26 @@ the **schedule**, never a person. Severity bands (both files):
 Consume **`part3/data/out/team_correlations.json`** only — or
 `GET /team/correlations`. Never read `employee_insight.json`; it is private.
 
-You own the k-anonymity policy. We ship `gating_applied: false` and real counts,
-*including patterns where `n_people_affected < 5`*. Filter or suppress those
-before anything reaches a manager, then flip your own gating flag. `calendar_fact`
-is pre-written to be safe to surface verbatim.
+You own the k-anonymity policy. Part 3 applies **one** rule, and it is about the
+team, not the patterns:
+
+| team size | what ships |
+| --- | --- |
+| `n_people_analysed >= 5` | **every** pattern, whatever its `n_people_affected` |
+| `n_people_analysed < 5` | nothing — no employer view exists for a group that small |
+
+The number of patterns is not a privacy variable, so it never limits the view. A
+six-person team that produced five patterns gets all five, including ones covering
+a single person. `gating_note` always states which rule ran and why.
+
+That means **a published pattern may describe one person**, and its threshold
+("meetings averaging 6.83+ attendees") can be identifying on a small team. Every
+pattern carries an honest `n_people_affected` so you can see that and decide —
+cell-level suppression is yours to apply. `calendar_fact` is pre-written to be
+safe to surface verbatim.
+
+`GET /team/correlations?raw=true` (or `team_correlations_raw.json`) gives the same
+patterns with `gating_applied: false`, if you would rather run the floor yourself.
 
 ## For Part 5 (employee UI)
 

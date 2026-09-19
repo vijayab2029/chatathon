@@ -201,7 +201,18 @@ def analyse_person(timeline: PersonTimeline, client, *, n_patterns: int = 3,
 
     return {
         "timeline": timeline,
+        # The narrative top-N: what this person is TOLD. A presentation choice.
         "patterns": passing,
+        # Everything that actually survived validation for this person. This is
+        # what the team rollup aggregates over, and the distinction matters:
+        # feeding the top-N to aggregate_team_patterns conflated "most worth
+        # telling this person" with "statistically true for this person", and
+        # silently deflated every n_people_affected count. A pattern true for
+        # 11 of 12 people but ranked 4th for most of them was counted as
+        # affecting 2, and the k-anonymity gate then suppressed it as though it
+        # described an individual. Measured on the 12-person fixtures: 0
+        # patterns cleared k=5 from the top-3 rollup, 30 clear it from this one.
+        "team_patterns": survivors,
         "all_results": results,
         "insight_text": text,
         "suggested_action": action,
@@ -289,7 +300,7 @@ def run_pipeline(stress_csv: Path | None = None,
     for pid in person_ids:
         tl = timelines[pid]
         res = analyse_person(tl, client, scale_max=scale_max)
-        per_person_patterns[pid] = res["patterns"]
+        per_person_patterns[pid] = res["team_patterns"]
         insights[pid] = build_employee_insight(
             person_id=pid,
             timeline_days=tl.days,

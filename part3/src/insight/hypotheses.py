@@ -23,10 +23,95 @@ __all__ = [
     "baseline_hypotheses",
     "validate_hypothesis_shape",
     "dedupe",
+    "THRESHOLD_LADDER",
+    "UNBINNED_FEATURES",
+    "snap_threshold",
 ]
 
 # Lag values the validator knows how to build pairs for.
 ALLOWED_LAGS: tuple[int, ...] = (0, 1, 2)
+
+
+# --------------------------------------------------------------------------
+# Threshold ladder
+# --------------------------------------------------------------------------
+#
+# See the employer-view privacy redesign spec, section 2.1.
+#
+# `adaptive_hypotheses` used to cut at the midpoint between two of ONE person's
+# observed values. That produced thresholds like `focus_time_minutes >= 407.5`
+# -- a number that could only have come from a single person's data, and which
+# a manager who sits in those meetings can work backwards from.
+#
+# The subtler damage was to the counts. `emit.aggregate_team_patterns` groups
+# on (feature, operator, threshold, lag_days), so two people with the SAME
+# underlying problem and different bespoke cut points landed in different
+# buckets. `n_people_affected` measured threshold coincidence rather than
+# prevalence, and the k-anonymity gate then suppressed genuine aggregates as
+# though they were individuals: on a 12-person run it withheld 10 of 12
+# patterns. No value of k fixes that, because the damage happens upstream of
+# the gate.
+#
+# Snapping happens BEFORE validation, never after. A threshold rewritten after
+# the fact would no longer be the number the lift, Pearson r and permutation
+# p-value were computed against, and the employer would be shown a claim that
+# nothing had tested. Binding at birth keeps every reported figure attached to
+# the test that produced it.
+#
+# Rungs sit inside each feature's observed range, measured from the 12-person
+# fixture set. They are whole numbers on purpose: a shared rung with a
+# fractional part still reads as a fingerprint.
+THRESHOLD_LADDER: dict[str, tuple[float, ...]] = {
+    "meeting_count": (2.0, 4.0, 6.0, 8.0),
+    "total_meeting_minutes": (60.0, 120.0, 180.0, 240.0, 360.0),
+    "back_to_back_blocks": (1.0, 2.0, 3.0, 4.0),
+    "longest_back_to_back_run": (2.0, 3.0, 4.0),
+    # Starts at 2, not 1: "days that switch between 1+ meeting topics" is true
+    # of every day with a meeting and says nothing.
+    "context_switches": (2.0, 3.0, 4.0),
+    "focus_time_minutes": (60.0, 120.0, 240.0, 360.0, 480.0),
+    "after_hours_meetings": (1.0, 2.0),
+    "no_agenda_meetings": (1.0, 2.0, 3.0, 4.0),
+    "large_meetings": (1.0, 2.0, 3.0),
+    "negative_sentiment_meetings": (1.0, 2.0, 3.0),
+    "recurring_meetings": (1.0, 2.0, 3.0, 4.0),
+    # Present only in Part 2's day-aggregate format (see adapters.py).
+    "avg_attendee_count": (3.0, 5.0, 8.0, 12.0),
+    "longest_meeting_stretch_min": (60.0, 120.0, 180.0),
+}
+
+# Binary features have no meaningful ladder -- 0 and 1 are already the only
+# cut points, and both are shared by construction, so neither can identify.
+UNBINNED_FEATURES: frozenset[str] = frozenset({"has_lunch_buffer"})
+
+
+def snap_threshold(feature: str, operator: str, value: float) -> float:
+    """Return the nearest ladder rung for ``value``, in the widening direction.
+
+    For ``>=`` / ``>`` we snap DOWN and for ``<=`` / ``<`` we snap UP, because
+    both admit MORE days into the exposed group. Widening is what merges people
+    onto a shared rung; snapping toward the narrower side would keep splitting
+    them, which is the behaviour this function exists to remove.
+
+    A cut outside the ladder's range clamps to the nearest end rather than
+    being dropped -- a hypothesis is still worth testing at the closest shared
+    cut point we have.
+
+    Unknown or unbinned features pass through unchanged.
+    """
+    rungs = THRESHOLD_LADDER.get(feature)
+    if not rungs or feature in UNBINNED_FEATURES:
+        return float(value)
+
+    value = float(value)
+    if operator in (">=", ">"):
+        below = [r for r in rungs if r <= value]
+        return below[-1] if below else rungs[0]
+    if operator in ("<=", "<"):
+        above = [r for r in rungs if r >= value]
+        return above[0] if above else rungs[-1]
+    # "==" on a laddered feature: nearest rung, ties going low.
+    return min(rungs, key=lambda r: (abs(r - value), r))
 
 
 # --------------------------------------------------------------------------
@@ -133,6 +218,13 @@ def baseline_hypotheses() -> list[Hypothesis]:
         assert feature in FEATURE_VOCABULARY, f"unknown baseline feature {feature!r}"
         assert operator in OPERATORS, f"unknown baseline operator {operator!r}"
         assert lag_days in ALLOWED_LAGS, f"unsupported baseline lag {lag_days!r}"
+        # Curated thresholds are already round and are shared by every person,
+        # so they do not identify anyone. They are snapped anyway so that ONE
+        # rule governs every threshold in the system: a curated "5+ meetings"
+        # sitting one rung away from an adaptive "4+" would split the very
+        # people the ladder exists to merge. meeting_count 5 -> 4 is the only
+        # baseline this moves.
+        threshold = snap_threshold(feature, operator, float(threshold))
         out.append(
             Hypothesis(
                 id=_baseline_id(feature, operator, float(threshold), lag_days),
@@ -207,6 +299,11 @@ def validate_hypothesis_shape(obj: dict) -> Hypothesis | None:
         threshold = _coerce_number(obj.get("threshold"))
         if threshold is None:
             return None
+        # A model asked to propose a threshold will happily invent a precise
+        # one, and a precise threshold is a fingerprint whether it was derived
+        # from a person's data or guessed. This is the same firewall as the
+        # feature and operator checks above, applied to the number.
+        threshold = snap_threshold(feature, operator, threshold)
 
         lag_raw = _coerce_number(obj.get("lag_days"))
         if lag_raw is None or lag_raw != int(lag_raw):
@@ -322,11 +419,22 @@ def adaptive_hypotheses(
             continue  # constant feature: no cut point can split it
 
         # Candidate cuts sit BETWEEN observed values, so ">=" is unambiguous.
+        # Each midpoint is then snapped onto the shared ladder: the raw value
+        # is a fingerprint of this person's distribution and must not survive
+        # into a Hypothesis. See snap_threshold().
         cuts: list[float] = []
+        seen_rungs: set[float] = set()
         for lower, upper in zip(distinct, distinct[1:]):
-            cut = (lower + upper) / 2.0
+            cut = snap_threshold(feature, ">=", (lower + upper) / 2.0)
+            if cut in seen_rungs:
+                continue  # two midpoints landing on one rung is one hypothesis
+            # Support is re-checked AFTER snapping. The raw midpoint may have
+            # split the days evenly while the rung it snaps to does not, and
+            # proposing a hypothesis the validator will only reject wastes a
+            # permutation run.
             n_exposed = sum(1 for v in series if v >= cut)
             if n_exposed >= _MIN_GROUP and (len(series) - n_exposed) >= _MIN_GROUP:
+                seen_rungs.add(cut)
                 cuts.append(cut)
         if not cuts:
             continue
@@ -342,8 +450,8 @@ def adaptive_hypotheses(
                     threshold=cut,
                     lag_days=lag,
                     rationale=(
-                        f"data-driven cut at {cut:g}, chosen from this person's own "
-                        f"observed range to split their days evenly"
+                        f"shared cut point at {cut:g}, selected because it splits "
+                        f"this timeline into two groups large enough to test"
                     ),
                     source="baseline",
                 ))

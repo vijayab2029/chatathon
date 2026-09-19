@@ -235,9 +235,10 @@ def test_aggregate_output_has_no_person_id_even_when_input_does():
 # ---------------------------------------------------------------------------
 # Safe-by-default k-anonymity gate (spec section 3.1, insight/gating.py)
 #
-# These guard the control that stops a single person's pattern being rendered
-# as a team "aggregate". On the real Part 1/2 data 8 of 9 patterns covered
-# exactly one person, so the default has to be the safe one.
+# The gate is a team-size floor ONLY: at or above k the whole rollup is
+# published, below k none of it is. The number of patterns is not a privacy
+# variable, so it never limits the view. Cell-level suppression by
+# n_people_affected is Part 4's call, and these tests pin that split.
 # ---------------------------------------------------------------------------
 
 from insight.gating import DEFAULT_K, apply_k_anonymity  # noqa: E402
@@ -256,17 +257,38 @@ def _team(counts, n_people=12):
     )
 
 
-def test_gate_suppresses_patterns_below_k():
+def test_gate_suppresses_cells_below_k_even_when_the_team_clears_the_floor():
+    """Both conditions are required: team size AND per-pattern coverage.
+
+    Team size alone is half a control. A 12-person team passes the floor, and
+    without cell suppression every single-person pattern is published as though
+    it were an aggregate.
+    """
     gated = apply_k_anonymity(_team([1, 2, 4, 5, 9]), k=5)
     kept = [p["n_people_affected"] for p in gated.patterns]
-    assert kept == [5, 9], "patterns under k must be withheld"
+    assert kept == [5, 9], "patterns covering fewer than k people must be withheld"
     assert gated.gating_applied is True
 
 
-def test_gate_reports_what_it_withheld_rather_than_hiding_it():
+def test_gate_withholds_a_single_person_pattern_however_big_the_team():
+    """The leak this whole redesign exists to close.
+
+    An earlier revision published these, on the reasoning that suppression left
+    the employer view empty. It did -- but because the rollup was fed each
+    person's narrative top-3 and fragmented by per-person thresholds, not
+    because the data lacked shared patterns. With both fixed the same fixtures
+    yield 18 patterns clearing k=5, so there is no longer a trade to make.
+    """
+    gated = apply_k_anonymity(_team([1, 1, 1, 1]), k=5)
+    assert gated.patterns == []
+
+
+def test_gate_says_what_it_withheld_rather_than_hiding_it():
     gated = apply_k_anonymity(_team([1, 1, 1, 7]), k=5)
-    assert "3 of 4" in gated.gating_note
     assert "k=5" in gated.gating_note
+    assert "3 of 4 pattern(s)" in gated.gating_note, (
+        "a judge asking 'what are you not showing me?' gets a number"
+    )
 
 
 def test_gate_blocks_everything_when_the_team_itself_is_too_small():
@@ -302,13 +324,18 @@ def test_written_team_file_is_gated_and_raw_file_is_not(tmp_path):
     assert gated["gating_applied"] is True
     assert raw["gating_applied"] is False
 
-    for pattern in gated["patterns"]:
-        assert pattern["n_people_affected"] >= DEFAULT_K, (
-            f"gated file leaked a k={pattern['n_people_affected']} pattern: "
-            f"{pattern.get('calendar_fact')}"
-        )
-
-    assert len(raw["patterns"]) >= len(gated["patterns"])
+    # The team clears the floor, so a real employer view exists -- but the gate
+    # still drops any pattern covering fewer than k people, so the gated file
+    # is a strict subset of raw.
+    assert gated["n_people_analysed"] >= DEFAULT_K
+    assert len(gated["patterns"]) < len(raw["patterns"]), (
+        "raw must retain the sub-threshold patterns Part 4 needs to see"
+    )
+    assert gated["patterns"], (
+        "a team above the floor must still get a usable view -- an empty "
+        "employer view means the aggregation is broken, not that it is private"
+    )
+    assert all(p["n_people_affected"] >= DEFAULT_K for p in gated["patterns"])
 
     # Neither file may carry identifiers, gated or not.
     for blob in ((tmp_path / "team_correlations.json").read_text(encoding="utf-8"),
