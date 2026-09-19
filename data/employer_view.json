@@ -1,13 +1,13 @@
 {
   "schema_version": "1.0",
-  "_comment": "SYNTHETIC DATA. Real Part 4 output, gated per team_correlations.json and team_structural_summary.json. No opt-in data exists in this pipeline by design \u2014 see opt_in_shares below.",
+  "_comment": "SYNTHETIC DATA. Employer view built from Part 3's team_themes.json (fixed 5-theme rollup, banded severity/prevalence, no thresholds, no counts, no per-person magnitudes -- see the employer-view privacy redesign spec). No opt-in data exists in this pipeline by design \u2014 see opt_in_shares below.",
   "synthetic": true,
   "team_id": "TEAM-1",
   "team_label": "Demo Team",
   "generated_at": "2026-09-19",
   "k_anonymity": {
     "threshold": 5,
-    "team_size": 12,
+    "team_size": 6,
     "satisfied": true
   },
   "opt_in_shares": {
@@ -52,6 +52,43 @@
       }
     ]
   },
+  "causal_categories": [
+    {
+      "category": "Meeting load",
+      "structural_fact": "Days with 120+ minutes booked in meetings are followed by measurably higher strain.",
+      "severity_band": "Moderate",
+      "trend": "flat",
+      "recommended_action": "Audit every recurring invite over 30 minutes and cancel or halve any that has no decision owner."
+    },
+    {
+      "category": "Fragmentation & focus",
+      "structural_fact": "Days containing an unbroken meeting stretch of 60+ minutes are followed by measurably higher strain. Days leaving 480+ minutes of uninterrupted focus time are followed by measurably lower strain.",
+      "severity_band": "Moderate",
+      "trend": "flat",
+      "recommended_action": "Switch the calendar default to 25- and 50-minute meetings so gaps exist without anyone having to ask for them."
+    },
+    {
+      "category": "After-hours encroachment",
+      "structural_fact": "No out-of-hours scheduling pattern reached the reporting threshold for this team.",
+      "severity_band": "Low",
+      "trend": "flat",
+      "recommended_action": "No change needed. Keep working hours set on the shared calendar."
+    },
+    {
+      "category": "Meeting hygiene",
+      "structural_fact": "No meeting-hygiene pattern reached the reporting threshold for this team.",
+      "severity_band": "Low",
+      "trend": "flat",
+      "recommended_action": "No change needed. Keep the current agenda expectation."
+    },
+    {
+      "category": "Recovery buffers",
+      "structural_fact": "No midday-recovery pattern reached the reporting threshold for this team.",
+      "severity_band": "Low",
+      "trend": "flat",
+      "recommended_action": "No change needed. Keep the midday break protected."
+    }
+  ],
   "meeting_density": {
     "caption": "Team average meetings per person, by weekday and time block.",
     "days": [
@@ -70,203 +107,40 @@
     ],
     "grid": [
       [
-        1.7,
-        1.8,
-        1.9,
-        1.9,
-        1.8
+        3.3,
+        3.5,
+        3.8,
+        3.8,
+        3.5
       ],
       [
+        5.3,
+        5.7,
+        5.5,
+        5.3,
+        5.3
+      ],
+      [
+        2.3,
         2.7,
-        2.8,
-        2.8,
+        2.0,
         2.7,
-        2.7
+        2.2
       ],
       [
-        1.2,
-        1.3,
-        1.0,
-        1.3,
-        1.1
+        2.0,
+        2.0,
+        2.3,
+        2.0,
+        2.3
       ],
       [
-        1.0,
-        1.0,
-        1.2,
-        1.0,
-        1.2
-      ],
-      [
-        0.4,
-        0.3,
-        0.4,
-        0.3,
-        0.2
+        0.8,
+        0.7,
+        0.8,
+        0.7,
+        0.5
       ]
     ]
-  },
-  "causal_categories": [
-    {
-      "category": "Meeting density",
-      "structural_fact": "The team averages 3.6 meetings per person per day.",
-      "severity_band": "Moderate",
-      "trend": "flat",
-      "recommended_action": "Review whether recurring meetings this week can be shortened or made async."
-    },
-    {
-      "category": "Back-to-back load",
-      "structural_fact": "40.8% of meetings are scheduled back-to-back with no gap.",
-      "severity_band": "High",
-      "trend": "flat",
-      "recommended_action": "Run a workload check-in this week \u2014 back-to-back scheduling is elevated team-wide."
-    },
-    {
-      "category": "Agenda hygiene",
-      "structural_fact": "31.2% of meetings have no agenda attached.",
-      "severity_band": "Moderate",
-      "trend": "flat",
-      "recommended_action": "Encourage agenda-required norms for recurring meetings."
-    },
-    {
-      "category": "After-hours load",
-      "structural_fact": "6.5% of meetings fall outside standard working hours.",
-      "severity_band": "Moderate",
-      "trend": "flat",
-      "recommended_action": "Check whether after-hours meetings are avoidable for most attendees."
-    },
-    {
-      "category": "Lunch buffer risk",
-      "structural_fact": "32.5% of days have no contiguous midday break.",
-      "severity_band": "Moderate",
-      "trend": "flat",
-      "recommended_action": "Consider protecting a midday buffer window on the team calendar."
-    },
-    {
-      "category": "Validated stress pattern",
-      "structural_fact": "Days with 1+ meetings booked without an agenda are followed by measurably higher strain.",
-      "severity_band": "Moderate",
-      "trend": "flat",
-      "recommended_action": "Discuss this pattern with the team as a scheduling norm, not as feedback to an individual."
-    },
-    {
-      "category": "Validated stress pattern",
-      "structural_fact": "Days that switch between 3+ different meeting topics are followed by measurably higher strain.",
-      "severity_band": "Moderate",
-      "trend": "flat",
-      "recommended_action": "Discuss this pattern with the team as a scheduling norm, not as feedback to an individual."
-    },
-    {
-      "category": "Validated stress pattern",
-      "structural_fact": "Days holding 2+ meetings are followed by measurably higher strain.",
-      "severity_band": "Moderate",
-      "trend": "flat",
-      "recommended_action": "Discuss this pattern with the team as a scheduling norm, not as feedback to an individual."
-    },
-    {
-      "category": "Validated stress pattern",
-      "structural_fact": "Days with 120+ minutes booked in meetings are followed by measurably higher strain.",
-      "severity_band": "Moderate",
-      "trend": "flat",
-      "recommended_action": "Discuss this pattern with the team as a scheduling norm, not as feedback to an individual."
-    },
-    {
-      "category": "Validated stress pattern",
-      "structural_fact": "Days containing a run of 2+ consecutive back-to-back meetings are followed by measurably higher strain.",
-      "severity_band": "Moderate",
-      "trend": "flat",
-      "recommended_action": "Discuss this pattern with the team as a scheduling norm, not as feedback to an individual."
-    },
-    {
-      "category": "Validated stress pattern",
-      "structural_fact": "Days with 1+ back-to-back meeting blocks are followed by measurably higher strain.",
-      "severity_band": "Moderate",
-      "trend": "flat",
-      "recommended_action": "Discuss this pattern with the team as a scheduling norm, not as feedback to an individual."
-    },
-    {
-      "category": "Validated stress pattern",
-      "structural_fact": "Days leaving 480+ minutes of uninterrupted focus time are associated with measurably lower strain the same day.",
-      "severity_band": "Moderate",
-      "trend": "flat",
-      "recommended_action": "Discuss this pattern with the team as a scheduling norm, not as feedback to an individual."
-    },
-    {
-      "category": "Validated stress pattern",
-      "structural_fact": "Days leaving 360+ minutes of uninterrupted focus time are followed by measurably lower strain.",
-      "severity_band": "Moderate",
-      "trend": "flat",
-      "recommended_action": "Discuss this pattern with the team as a scheduling norm, not as feedback to an individual."
-    },
-    {
-      "category": "Validated stress pattern",
-      "structural_fact": "Days with 1+ meetings whose title or description reads negatively are followed by measurably higher strain.",
-      "severity_band": "Moderate",
-      "trend": "flat",
-      "recommended_action": "Discuss this pattern with the team as a scheduling norm, not as feedback to an individual."
-    },
-    {
-      "category": "Validated stress pattern",
-      "structural_fact": "Days holding 2+ meetings are associated with measurably higher strain the same day.",
-      "severity_band": "Moderate",
-      "trend": "flat",
-      "recommended_action": "Discuss this pattern with the team as a scheduling norm, not as feedback to an individual."
-    },
-    {
-      "category": "Validated stress pattern",
-      "structural_fact": "Days with 1+ meetings of more than 8 attendees are followed by measurably higher strain.",
-      "severity_band": "Moderate",
-      "trend": "flat",
-      "recommended_action": "Discuss this pattern with the team as a scheduling norm, not as feedback to an individual."
-    },
-    {
-      "category": "Validated stress pattern",
-      "structural_fact": "Days that switch between 2+ different meeting topics are associated with measurably higher strain the same day.",
-      "severity_band": "Moderate",
-      "trend": "flat",
-      "recommended_action": "Discuss this pattern with the team as a scheduling norm, not as feedback to an individual."
-    },
-    {
-      "category": "Validated stress pattern",
-      "structural_fact": "Days with 120+ minutes booked in meetings are associated with measurably higher strain the same day.",
-      "severity_band": "Moderate",
-      "trend": "flat",
-      "recommended_action": "Discuss this pattern with the team as a scheduling norm, not as feedback to an individual."
-    },
-    {
-      "category": "Validated stress pattern",
-      "structural_fact": "Days with 1+ meetings booked without an agenda are associated with measurably higher strain the same day.",
-      "severity_band": "Moderate",
-      "trend": "flat",
-      "recommended_action": "Discuss this pattern with the team as a scheduling norm, not as feedback to an individual."
-    },
-    {
-      "category": "Validated stress pattern",
-      "structural_fact": "Days with 1+ meetings of more than 8 attendees are associated with measurably higher strain the same day.",
-      "severity_band": "Low",
-      "trend": "flat",
-      "recommended_action": "Discuss this pattern with the team as a scheduling norm, not as feedback to an individual."
-    },
-    {
-      "category": "Validated stress pattern",
-      "structural_fact": "Days with 1+ recurring-series meetings are associated with measurably higher strain the same day.",
-      "severity_band": "Moderate",
-      "trend": "flat",
-      "recommended_action": "Discuss this pattern with the team as a scheduling norm, not as feedback to an individual."
-    },
-    {
-      "category": "Validated stress pattern",
-      "structural_fact": "Days with 1+ meetings whose title or description reads negatively are associated with measurably higher strain the same day.",
-      "severity_band": "Moderate",
-      "trend": "flat",
-      "recommended_action": "Discuss this pattern with the team as a scheduling norm, not as feedback to an individual."
-    },
-    {
-      "category": "Validated stress pattern",
-      "structural_fact": "Days with 1+ recurring-series meetings are followed by measurably higher strain.",
-      "severity_band": "Moderate",
-      "trend": "flat",
-      "recommended_action": "Discuss this pattern with the team as a scheduling norm, not as feedback to an individual."
-    }
-  ]
+  }
 }
