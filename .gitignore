@@ -1,9 +1,25 @@
+# Python
 __pycache__/
 *.py[cod]
 .venv/
 venv/
-.env
-part3/.env
-part3/data/out/*.json
-.llm_cache/
 .pytest_cache/
+
+# Secrets / local env
+.env
+.env.*
+!.env.example
+part3/.env
+
+# Agent tooling
+.claude/
+.llm_cache/
+
+# Spec / design docs (local only)
+docs/superpowers/
+**/specs/
+**/spec/
+**/.specify/
+
+# Generated output
+part3/data/out/*.json
