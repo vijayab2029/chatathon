@@ -58,6 +58,12 @@ _SCHEDULE_NUMBERS: tuple[float, ...] = (
 )
 
 _NUMBER_RE = re.compile(r"(?<![0-9A-Za-z_.])(\d+(?:\.\d+)?)(?![0-9A-Za-z_])")
+
+# Clock times are wall-clock references ("declines meetings ending after 18:00"),
+# not claims about the data, so they are removed before the number scan. Without
+# this, "18:00" reads as the unsupported figure 18 and the numbers rule fires on
+# our own action templates.
+_CLOCK_RE = re.compile(r"\d{1,2}:\d{2}\s*(?:[ap]\.?m\.?)?", re.IGNORECASE)
 _TOLERANCE = 0.051
 
 
@@ -105,7 +111,8 @@ def deterministic_check(text: str, allowed_numbers: list[float] | None) -> list[
             issues.append(f"NO_BLAME: faults the person, not the schedule ('{match.group(0).strip()}')")
 
     allowed = _coerce_numbers(allowed_numbers)
-    for raw in _NUMBER_RE.findall(text):
+    scannable = _CLOCK_RE.sub(" ", text)
+    for raw in _NUMBER_RE.findall(scannable):
         try:
             value = float(raw)
         except ValueError:

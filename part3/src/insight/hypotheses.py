@@ -277,3 +277,74 @@ def dedupe(hyps: Iterable[Hypothesis]) -> list[Hypothesis]:
             chosen[key] = h
 
     return [chosen[k] for k in order]
+
+
+# --------------------------------------------------------------------------
+# Adaptive, data-driven hypotheses
+# --------------------------------------------------------------------------
+#
+# The curated baseline set uses absolute thresholds ("back_to_back_blocks >= 2").
+# Those are readable, but they are dead for anyone whose feature never reaches
+# the threshold: emp_007's back_to_back_blocks peaks at 1, so the >= 2 test had
+# zero exposed days and could never fire, and the person's real planted driver
+# went undetected. A threshold has to come from the person's own distribution.
+#
+# For each feature we take the observed values and keep the cut points that
+# actually split the person's days into two usable groups. That guarantees every
+# hypothesis is answerable for THAT person rather than for an imagined average one.
+
+_MIN_GROUP = 3          # matches the validator's support floor
+_MAX_CUTS_PER_FEATURE = 2
+
+
+def adaptive_hypotheses(
+    timeline: "PersonTimeline",
+    lags: tuple[int, ...] = (0, 1),
+) -> list[Hypothesis]:
+    """Per-person hypotheses whose thresholds come from that person's own data.
+
+    Only emits a hypothesis when the cut point leaves at least ``_MIN_GROUP``
+    days on each side, so nothing is proposed that the validator must then
+    reject for insufficient support.
+    """
+    out: list[Hypothesis] = []
+    days = getattr(timeline, "days", None) or []
+    if len(days) < _MIN_GROUP * 2:
+        return out
+
+    for feature in FEATURE_VOCABULARY:
+        try:
+            series = [float(d.features.get(feature, 0.0)) for d in days]
+        except Exception:
+            continue
+        distinct = sorted({v for v in series})
+        if len(distinct) < 2:
+            continue  # constant feature: no cut point can split it
+
+        # Candidate cuts sit BETWEEN observed values, so ">=" is unambiguous.
+        cuts: list[float] = []
+        for lower, upper in zip(distinct, distinct[1:]):
+            cut = (lower + upper) / 2.0
+            n_exposed = sum(1 for v in series if v >= cut)
+            if n_exposed >= _MIN_GROUP and (len(series) - n_exposed) >= _MIN_GROUP:
+                cuts.append(cut)
+        if not cuts:
+            continue
+
+        # Prefer the most balanced splits -- they have the most statistical power.
+        cuts.sort(key=lambda c: abs(sum(1 for v in series if v >= c) - len(series) / 2))
+        for cut in cuts[:_MAX_CUTS_PER_FEATURE]:
+            for lag in lags:
+                out.append(Hypothesis(
+                    id=f"adaptive::{feature}::ge::{cut:g}::lag{lag}",
+                    feature=feature,
+                    operator=">=",
+                    threshold=cut,
+                    lag_days=lag,
+                    rationale=(
+                        f"data-driven cut at {cut:g}, chosen from this person's own "
+                        f"observed range to split their days evenly"
+                    ),
+                    source="baseline",
+                ))
+    return out

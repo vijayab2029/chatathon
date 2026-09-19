@@ -24,7 +24,7 @@ from typing import Callable, Iterable, Sequence
 
 from .models import Hypothesis, PersonTimeline, ValidatedPattern
 
-__all__ = ["validate", "validate_all", "top_patterns"]
+__all__ = ["validate", "validate_all", "top_patterns", "apply_fdr", "robustness_rank"]
 
 # Tuning knobs. Kept module-level and named so the methodology is auditable.
 N_PERMUTATIONS = 1000
@@ -360,3 +360,76 @@ def top_patterns(
     if n <= 0:
         return []
     return [r for r in validate_all(timeline, hypotheses) if r.passed][:n]
+
+
+# --------------------------------------------------------------------------
+# Multiple-comparisons control
+# --------------------------------------------------------------------------
+
+def apply_fdr(results: list[ValidatedPattern], q: float = 0.10) -> list[ValidatedPattern]:
+    """Benjamini-Hochberg false-discovery-rate control, applied in place.
+
+    Adaptive hypotheses let us test ~60 candidates per person instead of 14. At
+    p <= 0.10 that alone would hand back roughly six spurious "findings" per
+    person purely by chance -- and telling someone their calendar causes stress
+    on the strength of a coin flip is exactly the failure this tool exists to
+    avoid. BH controls the expected proportion of false discoveries among the
+    patterns we report, rather than the per-test error rate.
+
+    Patterns that fail the correction keep their computed numbers but are marked
+    not passed, with the reason recorded.
+    """
+    candidates = [r for r in results if r.passed]
+    m = len(candidates)
+    if m == 0:
+        return results
+
+    ordered = sorted(candidates, key=lambda r: r.p_value)
+    # Largest k where p_(k) <= (k/m) * q
+    cutoff_rank = 0
+    for index, result in enumerate(ordered, start=1):
+        if result.p_value <= (index / m) * q:
+            cutoff_rank = index
+    threshold = ordered[cutoff_rank - 1].p_value if cutoff_rank else -1.0
+
+    for result in candidates:
+        if result.p_value > threshold:
+            result.passed = False
+            result.rejection_reason = (
+                f"did not survive false-discovery correction across {m} tested "
+                f"patterns (p={result.p_value:.3f})"
+            )
+    return results
+
+
+def robustness_rank(result: ValidatedPattern) -> tuple[float, float]:
+    """Sort key for surviving patterns: standardized effect first, then size.
+
+    Two things are being asked, and they should not be mixed into one number:
+
+      * IS IT REAL?  Already settled -- the permutation test plus `apply_fdr`
+        decided that before anything reaches this ranking.
+      * WHICH RELATIONSHIP IS STRONGEST?  That is what this answers.
+
+    Primary key is |pearson_r|, computed on the raw (unthresholded) feature
+    against lagged stress. It is scale-free, so features measured in minutes
+    and features measured in counts compare fairly, and it is threshold-
+    independent, so a pattern is not flattered by a lucky cut point. Because
+    callers de-duplicate by feature, ranking on r effectively asks "which
+    feature matters most", which is the question the output actually poses.
+
+    Secondary key is |lift|, which picks the threshold that best expresses that
+    feature -- the number the employee is shown.
+
+    Rejected alternatives, for the record: ranking on |lift| alone let a 3-day
+    pattern outrank a 5-day one at nearly identical effect. Weighting by
+    sqrt(support) over-corrected and let high-count, low-effect confounders
+    bury the true driver. Weighting by support**0.25 scored better on our
+    fixtures but the exponent is unjustifiable -- that is fitting the ranking
+    to the benchmark, not to the problem.
+
+    Known limitation: Pearson r measures LINEAR association, so a genuinely
+    threshold-shaped effect (nothing until 4 meetings, then a cliff) ranks lower
+    than its importance warrants. The lift tiebreak partly compensates.
+    """
+    return (abs(result.pearson_r), abs(result.lift))

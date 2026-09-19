@@ -128,14 +128,18 @@ def template_narration(patterns: list[ValidatedPattern],
 # --------------------------------------------------------------------------
 
 def analyse_person(timeline: PersonTimeline, client, *, n_patterns: int = 3) -> dict[str, Any]:
-    from .hypotheses import baseline_hypotheses, dedupe
-    from .validator import validate_all
+    from .hypotheses import baseline_hypotheses, adaptive_hypotheses, dedupe
+    from .validator import validate_all, apply_fdr, robustness_rank
     from .llm.agent_hypothesis import propose_hypotheses
     from .llm.agent_narrator import narrate
     from .llm.agent_critic import review
 
     # A1 -- baseline always present; the LLM only ADDS candidates.
-    hyps = list(baseline_hypotheses())
+    # Adaptive hypotheses derive their thresholds from this person's own range.
+    # Without them a curated threshold can be dead on arrival: emp_007's
+    # back_to_back_blocks never exceeds 1, so the ">= 2" test had zero exposed
+    # days and their real driver was invisible.
+    hyps = list(baseline_hypotheses()) + adaptive_hypotheses(timeline)
     if client.available:
         try:
             hyps += propose_hypotheses(client, timeline.person_id, build_digest(timeline))
@@ -147,7 +151,19 @@ def analyse_person(timeline: PersonTimeline, client, *, n_patterns: int = 3) -> 
     # validate_all deliberately retains failures so the demo can show killed
     # hypotheses; only the survivors go forward.
     results = validate_all(timeline, hyps)
-    passing = _dedupe_by_feature([r for r in results if r.passed])[:n_patterns]
+
+    # Testing ~60 adaptive candidates instead of 14 would hand back several
+    # spurious findings per person at p <= 0.1, so control the false-discovery
+    # rate across the whole family before anything is called a finding.
+    apply_fdr(results)
+
+    # Rank on effect size weighted by support, not raw lift. Raw lift let a
+    # 3-day pattern outrank a 5-day one at nearly identical effect and pushed
+    # emp_004's real driver out of the top 3.
+    survivors = sorted(
+        (r for r in results if r.passed), key=robustness_rank, reverse=True
+    )
+    passing = _dedupe_by_feature(survivors)[:n_patterns]
 
     scored = [d.stress_score for d in timeline.days if d.stress_score is not None]
     avg_stress = statistics.fmean(scored) if scored else 0.0
