@@ -1,0 +1,78 @@
+{
+  "synthetic": true,
+  "note": "Planted correlations. Test-only; the engine must not read this.",
+  "people": {
+    "emp_001": {
+      "driver_feature": "back_to_back_blocks",
+      "effect_points": 7.0,
+      "narrative": "drained by packed consecutive meetings",
+      "baseline_stress": 42.1
+    },
+    "emp_002": {
+      "driver_feature": "after_hours_meetings",
+      "effect_points": 9.0,
+      "narrative": "evening meetings disrupt wind-down",
+      "baseline_stress": 36.8
+    },
+    "emp_003": {
+      "driver_feature": "no_agenda_meetings",
+      "effect_points": 5.5,
+      "narrative": "unprepared meetings create ambiguity load",
+      "baseline_stress": 43.5
+    },
+    "emp_004": {
+      "driver_feature": "large_meetings",
+      "effect_points": 4.5,
+      "narrative": "large audiences raise performance pressure",
+      "baseline_stress": 44.4
+    },
+    "emp_005": {
+      "driver_feature": "meeting_count",
+      "effect_points": 3.0,
+      "narrative": "sheer volume",
+      "baseline_stress": 38.2
+    },
+    "emp_006": {
+      "driver_feature": "negative_sentiment_meetings",
+      "effect_points": 8.0,
+      "narrative": "difficult conversations linger",
+      "baseline_stress": 42.7
+    },
+    "emp_007": {
+      "driver_feature": "back_to_back_blocks",
+      "effect_points": 7.0,
+      "narrative": "drained by packed consecutive meetings",
+      "baseline_stress": 39.5
+    },
+    "emp_008": {
+      "driver_feature": "after_hours_meetings",
+      "effect_points": 9.0,
+      "narrative": "evening meetings disrupt wind-down",
+      "baseline_stress": 45.7
+    },
+    "emp_009": {
+      "driver_feature": "no_agenda_meetings",
+      "effect_points": 5.5,
+      "narrative": "unprepared meetings create ambiguity load",
+      "baseline_stress": 40.7
+    },
+    "emp_010": {
+      "driver_feature": "large_meetings",
+      "effect_points": 4.5,
+      "narrative": "large audiences raise performance pressure",
+      "baseline_stress": 44.0
+    },
+    "emp_011": {
+      "driver_feature": "meeting_count",
+      "effect_points": 3.0,
+      "narrative": "sheer volume",
+      "baseline_stress": 43.7
+    },
+    "emp_012": {
+      "driver_feature": "negative_sentiment_meetings",
+      "effect_points": 8.0,
+      "narrative": "difficult conversations linger",
+      "baseline_stress": 42.5
+    }
+  }
+}

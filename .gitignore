@@ -1,5 +1,6 @@
 # --- Python ---
 __pycache__/
+*.py[cod]
 *.pyc
 .mypy_cache/
 .pytest_cache/
@@ -14,6 +15,9 @@ build/
 
 # --- Environment / secrets ---
 .env
+.env.*
+!.env.example
+part3/.env
 .env.local
 .env.*.local
 
@@ -28,6 +32,10 @@ supabase/.temp
 
 # --- AI tooling / local-only artifacts ---
 .claude/
+.llm_cache/
 specs/
 .cursor/
 .windsurf/
+
+# --- Generated output ---
+part3/data/out/*.json
