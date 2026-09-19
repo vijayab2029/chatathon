@@ -1,21 +1,39 @@
-# Python
-__pycache__/
-*.py[cod]
-*.pyc
-.venv
-.venv/
-venv/
-.pytest_cache/
+# Specs / scratch notes
+specs/
+.specs/
+*.spec.md
 
-# Secrets / local env
+# Agent instructions — local only
+CLAUDE.md
+.claude/
+AGENTS.md
+
+# Environment
 .env
 .env.*
 !.env.example
-part3/.env
+*.local
 
-# Agent tooling
-.claude/
-.llm_cache/
+# Node
+node_modules/
+npm-debug.log*
+yarn-error.log*
+.pnpm-debug.log*
 
-# Generated output
-part3/data/out/*.json
+# Python (Parts 1–4 tooling)
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+.ipynb_checkpoints/
+
+# --- Supabase local dev ---
+supabase/.branches
+supabase/.temp
+
+# OS / editor
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+*.swp
