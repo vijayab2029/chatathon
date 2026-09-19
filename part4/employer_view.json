@@ -22,10 +22,6 @@
     {
       "category": "lunch_buffer_risk",
       "severity": "moderate"
-    },
-    {
-      "category": "team_stress_level",
-      "severity": "high"
     }
   ],
   "recommended_actions": [
@@ -33,17 +29,8 @@
     "Suggest adding buffer time between back-to-back blocks where possible.",
     "Encourage agenda-required norms for recurring meetings.",
     "Check whether after-hours meetings are avoidable for most attendees.",
-    "Consider protecting a midday buffer window on the team calendar.",
-    "Run a workload rebalancing check-in this week \u2014 do not target individuals; discuss as a team norm."
+    "Consider protecting a midday buffer window on the team calendar."
   ],
-  "opted_in_specifics": [
-    {
-      "person_id": "user_101",
-      "insight": "Your stress tends to spike on days with 5+ meetings and a late-evening call, especially with no lunch buffer."
-    },
-    {
-      "person_id": "user_105",
-      "insight": "Your stress spikes strongly on days with 6+ meetings and back-to-back blocks before lunch."
-    }
-  ]
+  "validated_patterns": [],
+  "gating_applied": true
 }

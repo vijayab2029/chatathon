@@ -1,4 +1,0 @@
-person_id,date,stress_score,contributing_factors
-p1,2026-09-19,82,"low_hrv;low_recovery;high_strain"
-p2,2026-09-19,45,"normal_recovery"
-p3,2026-09-19,77,"low_recovery;poor_sleep"
