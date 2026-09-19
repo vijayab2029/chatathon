@@ -74,11 +74,19 @@ Each part is scoped to be buildable solo in ~2.5–3 hours, with clear interface
 
 | From → To | Format |
 |---|---|
-| Part 1 → Part 3 | `stress_scores.csv`: `person_id, date, stress_score, contributing_factors` |
+| Part 1 → Part 3 | `stress_scores.csv`: `person_id, date, stress_score, contributing_factors`; plus `whoop_biometrics.csv` (recovery_score, hrv_rmssd_milli, resting_heart_rate, sleep_efficiency_percentage, sleep_performance_percentage, total_sleep_hours, respiratory_rate, strain) |
 | Part 2 → Part 3 | `meeting_features.json`: per-person event list with tagged features |
 | Part 2 → Part 4 | `team_structural_summary.json`: non-personal, team-level only |
 | Part 3 → Part 5 | `employee_insight.json`: per-person private insight text/data |
 | Part 4 → Part 5 | `employer_view.json`: category + severity band + recommended action, no PII |
+
+**Part 3 join note (important):** WHOOP recovery/HRV/RHR are measured overnight and
+reported the next morning, so Part 1's biometrics for date D reflect Part 2's meeting
+features for date **D-1**, not D. When joining `meeting_features.json` against
+`stress_scores.csv`/`whoop_biometrics.csv`, shift the calendar side back one day —
+a same-date join misses the relationship that's actually in the data (verified lag-1
+correlation: -0.98). Same-day meeting load only drives that day's own `strain` value.
+See `data/README.md` for the full data dictionary.
 
 ## 6. Cut list if time runs short
 
