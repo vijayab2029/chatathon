@@ -1,91 +1,146 @@
 {
   "schema_version": "1.0",
-  "_comment": "SYNTHETIC DATA. Part 4 -> Part 5 contract. Non-personal by construction: category + coarse severity band + recommended action only. No scores, no IDs, no per-person rows. Replace with the real Part 4 output; keep key names identical.",
+  "_comment": "SYNTHETIC DATA. Real Part 4 output, gated per team_correlations.json and team_structural_summary.json. No opt-in data exists in this pipeline by design \u2014 see opt_in_shares below.",
   "synthetic": true,
-  "team_id": "TEAM-NORTH",
-  "team_label": "Platform — North",
-  "generated_at": "2026-09-16",
+  "team_id": "TEAM-1",
+  "team_label": "Demo Team",
+  "generated_at": "2026-09-19",
   "k_anonymity": {
     "threshold": 5,
-    "team_size": 9,
+    "team_size": 6,
     "satisfied": true
   },
+  "opt_in_shares": {
+    "count": 0,
+    "min_reportable": 3,
+    "reportable": false,
+    "suppressed_message": "Opt-in sharing is not part of this pipeline \u2014 Part 3's privacy contract keeps individual insights out of Part 4 entirely, so nothing is ever escalated here."
+  },
+  "never_shown": [
+    "Any individual's stress score",
+    "Any name or employee identifier",
+    "Any per-person biometric or calendar record",
+    "Counts of affected people below the k-anonymity threshold",
+    "Any ranking or comparison between team members"
+  ],
   "structural_summary": {
-    "hero": { "label": "Meetings per person on Wednesdays", "value": 5.2, "unit": "" },
+    "hero": {
+      "label": "Meetings per person per day",
+      "value": 3.5,
+      "unit": ""
+    },
     "tiles": [
-      { "label": "Meetings / person / week", "value": 21.4, "unit": "" },
-      { "label": "Recurring meetings with no agenda", "value": 41, "unit": "%" },
-      { "label": "Invites sent outside 09:00–18:00", "value": 18, "unit": "%" },
-      { "label": "Median gap between meetings", "value": 10, "unit": "min" }
+      {
+        "label": "Meetings without an agenda",
+        "value": 30.6,
+        "unit": "%"
+      },
+      {
+        "label": "Meetings outside 9am\u20136pm",
+        "value": 7.2,
+        "unit": "%"
+      },
+      {
+        "label": "Days without a lunch buffer",
+        "value": 31.2,
+        "unit": "%"
+      },
+      {
+        "label": "Meetings back-to-back",
+        "value": 39.6,
+        "unit": "%"
+      }
     ]
   },
   "meeting_density": {
     "caption": "Team average meetings per person, by weekday and time block.",
-    "days": ["Mon", "Tue", "Wed", "Thu", "Fri"],
-    "blocks": ["08–10", "10–12", "12–14", "14–16", "16–18"],
+    "days": [
+      "Mon",
+      "Tue",
+      "Wed",
+      "Thu",
+      "Fri"
+    ],
+    "blocks": [
+      "08\u201310",
+      "10\u201312",
+      "12\u201314",
+      "14\u201316",
+      "16\u201318"
+    ],
     "grid": [
-      [0.4, 1.2, 0.6, 1.1, 0.5],
-      [0.6, 1.5, 0.8, 1.3, 0.7],
-      [1.1, 2.3, 1.4, 2.1, 1.2],
-      [0.7, 1.6, 0.9, 1.4, 0.8],
-      [0.5, 1.0, 0.4, 0.8, 0.9]
+      [
+        0.8,
+        0.8,
+        1.0,
+        1.0,
+        1.0
+      ],
+      [
+        1.2,
+        1.5,
+        1.5,
+        1.3,
+        1.5
+      ],
+      [
+        0.5,
+        1.0,
+        0.5,
+        0.5,
+        0.5
+      ],
+      [
+        0.7,
+        0.2,
+        0.5,
+        0.5,
+        0.7
+      ],
+      [
+        0.2,
+        0.3,
+        0.3,
+        0.0,
+        0.0
+      ]
     ]
   },
   "causal_categories": [
     {
       "category": "Meeting density",
-      "structural_fact": "Wednesdays average 5.2 meetings per person, with no scheduled gap over 30 minutes.",
-      "severity_band": "High",
-      "trend": "up",
-      "recommended_action": "Declare a protected 2-hour no-meeting block on Wednesday mornings for the whole team."
+      "structural_fact": "The team averages 3.5 meetings per person per day.",
+      "severity_band": "Moderate",
+      "trend": "flat",
+      "recommended_action": "Review whether recurring meetings this week can be shortened or made async."
     },
     {
-      "category": "Recovery buffer",
-      "structural_fact": "The median gap between consecutive meetings across the team is 10 minutes.",
-      "severity_band": "High",
+      "category": "Back-to-back load",
+      "structural_fact": "39.6% of meetings are scheduled back-to-back with no gap.",
+      "severity_band": "Moderate",
       "trend": "flat",
-      "recommended_action": "Change the calendar default to 25- and 50-minute meetings so a buffer exists by default."
+      "recommended_action": "Suggest adding buffer time between back-to-back blocks where possible."
     },
     {
       "category": "Agenda hygiene",
-      "structural_fact": "41% of recurring meetings have no agenda attached at send time.",
-      "severity_band": "Elevated",
-      "trend": "up",
-      "recommended_action": "Require an agenda field on recurring invites; auto-cancel any recurring meeting with no agenda for three cycles."
-    },
-    {
-      "category": "Workload distribution",
-      "structural_fact": "Meeting load between the lightest and heaviest quartile of the team differs by 2.3×.",
-      "severity_band": "Elevated",
-      "trend": "up",
-      "recommended_action": "Run a workload rebalancing check-in at this week's team sync — with the whole team, not selected individuals."
+      "structural_fact": "30.6% of meetings have no agenda attached.",
+      "severity_band": "Moderate",
+      "trend": "flat",
+      "recommended_action": "Encourage agenda-required norms for recurring meetings."
     },
     {
       "category": "After-hours load",
-      "structural_fact": "18% of invites are sent outside 09:00–18:00 local time.",
+      "structural_fact": "7.2% of meetings fall outside standard working hours.",
       "severity_band": "Moderate",
       "trend": "flat",
-      "recommended_action": "Turn on delayed-send defaults for invites composed after 18:00."
+      "recommended_action": "Check whether after-hours meetings are avoidable for most attendees."
     },
     {
-      "category": "Focus fragmentation",
-      "structural_fact": "The longest uninterrupted block on a median day is 47 minutes.",
-      "severity_band": "Low",
-      "trend": "down",
-      "recommended_action": "No action needed this cycle — continue monitoring."
+      "category": "Lunch buffer risk",
+      "structural_fact": "31.2% of days have no contiguous midday break.",
+      "severity_band": "Moderate",
+      "trend": "flat",
+      "recommended_action": "Consider protecting a midday buffer window on the team calendar."
     }
-  ],
-  "opt_in_shares": {
-    "count": 2,
-    "min_reportable": 3,
-    "reportable": false,
-    "suppressed_message": "2 people opted to share specifics. Below the reporting floor of 3, so their content is withheld."
-  },
-  "never_shown": [
-    "Any individual's stress score",
-    "Any name, employee ID, or re-identifiable attribute",
-    "Any per-person biometric reading",
-    "Counts of affected people below the k-anonymity threshold",
-    "Any ranking or comparison of team members"
   ]
 }
