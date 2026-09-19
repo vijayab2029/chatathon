@@ -90,6 +90,8 @@ _ACTION_TEMPLATES = {
     "has_lunch_buffer": "Block a recurring 30-minute lunch hold that meetings cannot overwrite.",
     "focus_time_minutes": "Protect one 90-minute focus block each morning.",
     "context_switches": "Group similar meetings onto the same day to reduce context switching.",
+    "avg_attendee_count": "Ask whether you need to attend the largest meetings live, or can read the notes.",
+    "longest_meeting_stretch_min": "Break your longest unbroken meeting stretch with a scheduled gap.",
     "recurring_meetings": "Audit your recurring meetings and drop the ones without a clear purpose.",
 }
 
@@ -127,7 +129,8 @@ def template_narration(patterns: list[ValidatedPattern],
 # Per-person analysis
 # --------------------------------------------------------------------------
 
-def analyse_person(timeline: PersonTimeline, client, *, n_patterns: int = 3) -> dict[str, Any]:
+def analyse_person(timeline: PersonTimeline, client, *, n_patterns: int = 3,
+                   scale_max: float = 100.0) -> dict[str, Any]:
     from .hypotheses import baseline_hypotheses, adaptive_hypotheses, dedupe
     from .validator import validate_all, apply_fdr, robustness_rank
     from .llm.agent_hypothesis import propose_hypotheses
@@ -151,6 +154,10 @@ def analyse_person(timeline: PersonTimeline, client, *, n_patterns: int = 3) -> 
     # validate_all deliberately retains failures so the demo can show killed
     # hypotheses; only the survivors go forward.
     results = validate_all(timeline, hyps)
+    # Severity bands are proportions of the scale, so the numbers mean the same
+    # thing whether Part 1 emits 0-100 or 1-43.
+    for r in results:
+        r.scale_max = scale_max
 
     # Testing ~60 adaptive candidates instead of 14 would hand back several
     # spurious findings per person at p <= 0.1, so control the false-discovery
@@ -245,7 +252,8 @@ def run_pipeline(stress_csv: Path | None = None,
                  out_dir: Path | None = None,
                  offline: bool = False,
                  limit: int | None = None) -> dict[str, Any]:
-    from .loaders import load_stress_scores, load_meeting_events, build_timelines
+    from .loaders import load_stress_scores
+    from .adapters import build_timelines_any, infer_scale_max
     from .emit import build_employee_insight, aggregate_team_patterns, write_outputs
     from .llm.openai_client import LLMClient
 
@@ -255,8 +263,11 @@ def run_pipeline(stress_csv: Path | None = None,
     out_dir.mkdir(parents=True, exist_ok=True)
 
     stress = load_stress_scores(stress_csv)
-    events = load_meeting_events(meetings_json)
-    timelines = build_timelines(stress, events)
+    # Part 2 ships day aggregates; our fixtures ship per-event rows. Detect
+    # rather than assume -- pointed at the wrong shape the event loader returns
+    # an all-zero feature vector, which fails silently instead of loudly.
+    timelines, input_format = build_timelines_any(stress, meetings_json)
+    scale_max = infer_scale_max(stress)
 
     person_ids = sorted(timelines)
     if limit:
@@ -265,13 +276,19 @@ def run_pipeline(stress_csv: Path | None = None,
     client = LLMClient(offline=offline)
     mode = "OFFLINE (deterministic only)" if not client.available else "LLM agents ENABLED"
     print(f"Analysing {len(person_ids)} people | {mode}")
+    print(f"Input format: {input_format} | stress scale 0-{scale_max:g}")
+    n_days = len(next(iter(timelines.values())).days) if timelines else 0
+    if n_days < 14:
+        print(f"  [warn] only {n_days} days per person. The validator needs 3 exposed "
+              f"and 3 unexposed days, so most patterns cannot reach significance. "
+              f"Per-person findings will be sparse; ask Part 1/2 for a longer window.")
 
     insights = {}
     per_person_patterns: dict[str, list[ValidatedPattern]] = {}
 
     for pid in person_ids:
         tl = timelines[pid]
-        res = analyse_person(tl, client)
+        res = analyse_person(tl, client, scale_max=scale_max)
         per_person_patterns[pid] = res["patterns"]
         insights[pid] = build_employee_insight(
             person_id=pid,

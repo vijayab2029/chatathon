@@ -80,6 +80,10 @@ Each part is scoped to be buildable solo in ~2.5–3 hours, with clear interface
 | Part 3 → Part 5 | `employee_insight.json`: per-person private insight text/data |
 | Part 4 → Part 5 | `employer_view.json`: category + severity band + recommended action, no PII |
 
+**Persistence note:** once section 6 lands, these files become *seed input* to
+Postgres rather than the runtime contract. The formats do not change — Parts 4
+and 5 just read the equivalent tables instead of the files.
+
 **Part 3 join note (important):** WHOOP recovery/HRV/RHR are measured overnight and
 reported the next morning, so Part 1's biometrics for date D reflect Part 2's meeting
 features for date **D-1**, not D. When joining `meeting_features.json` against
