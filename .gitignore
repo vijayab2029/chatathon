@@ -1,41 +1,39 @@
-# --- Python ---
-__pycache__/
-*.py[cod]
-*.pyc
-.mypy_cache/
-.pytest_cache/
-venv/
-.venv/
+# Specs / scratch notes
+specs/
+.specs/
+*.spec.md
 
-# --- Node / Next.js (if used for dashboards) ---
-node_modules/
-.next/
-dist/
-build/
+# Agent instructions — local only
+CLAUDE.md
+.claude/
+AGENTS.md
 
-# --- Environment / secrets ---
+# Environment
 .env
 .env.*
 !.env.example
-part3/.env
-.env.local
-.env.*.local
+*.local
 
-# --- Editor / OS ---
-.DS_Store
-.vscode/
-.idea/
+# Node
+node_modules/
+npm-debug.log*
+yarn-error.log*
+.pnpm-debug.log*
+
+# Python (Parts 1–4 tooling)
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+.ipynb_checkpoints/
 
 # --- Supabase local dev ---
 supabase/.branches
 supabase/.temp
 
-# --- AI tooling / local-only artifacts ---
-.claude/
-.llm_cache/
-specs/
-.cursor/
-.windsurf/
-
-# --- Generated output ---
-part3/data/out/*.json
+# OS / editor
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+*.swp

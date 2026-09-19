@@ -1,0 +1,316 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Team Stress Insight — simulated demo</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bowlby+One&family=Montserrat:wght@500;600;700;800&family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+<!-- Background plane: gradient wash, pink highlight, grain, drifting triangles -->
+<div class="bg" aria-hidden="true">
+  <div class="bg__wash"></div>
+  <svg class="bg__tris" id="bgTris" preserveAspectRatio="none"></svg>
+  <div class="bg__grain"></div>
+</div>
+
+<div class="page">
+
+  <header class="topbar">
+    <div class="topbar__in">
+      <div class="logo">
+        <svg class="logo__mark" viewBox="0 0 40 40" aria-hidden="true">
+          <defs>
+            <linearGradient id="lg" x1="0" y1="0" x2="1" y2="1">
+              <stop offset="0" stop-color="#2f1aed"/><stop offset="1" stop-color="#ff5db1"/>
+            </linearGradient>
+          </defs>
+          <path d="M20 3 L37 33 H3 Z" fill="url(#lg)"/>
+          <path d="M20 14 L28.5 29 H11.5 Z" fill="#FBF6EF"/>
+          <path d="M20 21 L24 28 H16 Z" fill="#302b5c"/>
+        </svg>
+        <span class="logo__text">STRESS&nbsp;SIGNAL</span>
+      </div>
+
+      <div class="tabs" role="tablist" aria-label="Choose a view">
+        <button class="tab" role="tab" id="tab-employee" aria-controls="view-employee" aria-selected="true">Employee view</button>
+        <button class="tab" role="tab" id="tab-employer" aria-controls="view-employer" aria-selected="false">Employer view</button>
+      </div>
+    </div>
+  </header>
+
+  <div id="fallbackBanner" class="banner" hidden></div>
+
+  <!-- The pill the hero bubble collapses into after it pops -->
+  <div class="pill" id="pill" aria-hidden="true">
+    <span class="pill__label" id="pillLabel">Today</span>
+    <span class="pill__value" id="pillValue">—</span>
+    <span class="pill__tag">Simulated</span>
+  </div>
+
+  <main>
+
+  <!-- =====================================================================
+       EMPLOYEE VIEW — private by default, full detail, the person owns it
+       ===================================================================== -->
+  <section id="view-employee" role="tabpanel" aria-labelledby="tab-employee">
+
+    <div class="hero">
+      <div class="wrap">
+        <span class="hero__eyebrow">Private · visible only to you</span>
+        <h1 class="hero__title">Your week, <em>explained by your calendar</em>.</h1>
+        <p class="hero__sub">
+          Simulated WHOOP-style recovery data joined to simulated calendar structure. Everything on this
+          screen stays on this screen unless you choose otherwise — your employer never receives a number
+          from this page.
+        </p>
+      </div>
+
+      <div class="wrap stage" id="stage-employee">
+        <div class="shardLayer" id="shards-employee" aria-hidden="true"></div>
+        <article class="heroCard" id="hero-employee" data-hero>
+          <div class="heroCard__top">
+            <div>
+              <div class="heroCard__who" id="empWho">—</div>
+              <div class="heroCard__meta" id="empMeta">—</div>
+            </div>
+            <span class="simTag" style="margin-left:auto">Simulated data</span>
+          </div>
+
+          <div class="heroFig">
+            <span class="heroFig__num" id="empScore">—</span>
+            <span class="heroFig__unit">/100</span>
+            <div class="heroFig__side">
+              <div class="heroFig__label" id="empBand">—</div>
+              <div class="heroFig__delta" id="empDelta"></div>
+            </div>
+          </div>
+
+          <div class="kpis" id="empKpis"></div>
+        </article>
+      </div>
+    </div>
+
+    <div class="section">
+      <div class="wrap">
+        <div class="section__head">
+          <h2 class="section__title">What your 14 days look like</h2>
+          <p class="section__note">Weekend columns are shaded — the dips are days with no meetings.</p>
+        </div>
+
+        <div class="grid2">
+          <article class="card card--ridged">
+            <div class="chartHead">
+              <div>
+                <h3 class="chartHead__title">Daily stress score</h3>
+                <p class="chartHead__sub">Sep 3 – Sep 16, 2026</p>
+              </div>
+              <div class="chartHead__side">
+                <span class="simTag">Simulated</span>
+                <button class="toggleBtn" id="trendTableBtn" aria-pressed="false" aria-controls="trendTable">Table</button>
+              </div>
+            </div>
+            <svg class="chart" id="trendChart" role="img" aria-label="Line chart of daily stress score over 14 days"></svg>
+            <div class="tableWrap" id="trendTable" hidden></div>
+          </article>
+
+          <article class="card card--ridged">
+            <div class="chartHead">
+              <div>
+                <h3 class="chartHead__title">What is driving today</h3>
+                <p class="chartHead__sub">Share of today's score attributed to each factor</p>
+              </div>
+            </div>
+            <svg class="chart" id="factorChart" role="img" aria-label="Bar chart of contributing factors by share of today's stress score"></svg>
+          </article>
+        </div>
+      </div>
+    </div>
+
+    <div class="section">
+      <div class="wrap">
+        <div class="section__head">
+          <h2 class="section__title">Your insight</h2>
+          <p class="section__note">Generated per person. Never leaves this view.</p>
+        </div>
+        <article class="insight" id="empInsight"></article>
+      </div>
+    </div>
+
+    <div class="section">
+      <div class="wrap">
+        <div class="section__head">
+          <h2 class="section__title">Share upward?</h2>
+          <p class="section__note">Off by default. Consent is never inferred.</p>
+        </div>
+        <article class="card">
+          <div class="optin">
+            <div class="optin__body">
+              <h3 class="card__title">Share my calendar pattern with my manager</h3>
+              <p class="card__sub" id="optinState">Currently off. Your manager sees nothing that originates from you.</p>
+              <ul class="shareList" id="optinList"></ul>
+            </div>
+            <button class="switch" id="optinSwitch" role="switch" aria-checked="false" aria-label="Share my calendar pattern with my manager"></button>
+          </div>
+        </article>
+      </div>
+    </div>
+  </section>
+
+  <!-- =====================================================================
+       EMPLOYER VIEW — aggregate, gated, causes not people
+       ===================================================================== -->
+  <section id="view-employer" role="tabpanel" aria-labelledby="tab-employer" hidden>
+
+    <div class="hero">
+      <div class="wrap">
+        <span class="hero__eyebrow">Aggregate · k-anonymity gated</span>
+        <h1 class="hero__title">The calendar is the <em>patient</em>, not the person.</h1>
+        <p class="hero__sub">
+          This view reports causes attached to team calendar structure and coarse severity bands. It contains
+          no scores, no names, and no per-person rows — by construction, not by policy.
+        </p>
+      </div>
+
+      <div class="wrap">
+        <div class="gate" id="gate">
+          <svg class="gate__ic" id="gateIc" viewBox="0 0 40 40" aria-hidden="true"></svg>
+          <div class="gate__body">
+            <h3 class="gate__title" id="gateTitle">—</h3>
+            <p class="gate__text" id="gateText">—</p>
+          </div>
+          <div class="sizeCtl">
+            <span class="sizeCtl__label">Team size</span>
+            <button class="stepBtn" id="sizeDown" aria-label="Decrease simulated team size">−</button>
+            <span class="sizeCtl__val" id="sizeVal">9</span>
+            <button class="stepBtn" id="sizeUp" aria-label="Increase simulated team size">+</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="wrap" id="gateBlocked" hidden>
+        <div class="blocked">
+          <svg viewBox="0 0 48 48" width="54" height="54" aria-hidden="true">
+            <path d="M24 4 L45 42 H3 Z" fill="none" stroke="#b22626" stroke-width="3" stroke-linejoin="round"/>
+            <rect x="21.6" y="18" width="4.8" height="12" rx="2.4" fill="#b22626"/>
+            <circle cx="24" cy="35" r="2.6" fill="#b22626"/>
+          </svg>
+          <h2 class="blocked__title">Nothing to show.</h2>
+          <p class="blocked__text" id="blockedText">—</p>
+        </div>
+      </div>
+
+      <div class="wrap stage" id="stage-employer">
+        <div class="shardLayer" id="shards-employer" aria-hidden="true"></div>
+        <article class="heroCard" id="hero-employer" data-hero>
+          <div class="heroCard__top">
+            <div>
+              <div class="heroCard__who" id="orgWho">—</div>
+              <div class="heroCard__meta" id="orgMeta">—</div>
+            </div>
+            <span class="simTag" style="margin-left:auto">Simulated data</span>
+          </div>
+
+          <div class="heroFig">
+            <span class="heroFig__num" id="orgHeroNum">—</span>
+            <div class="heroFig__side">
+              <div class="heroFig__label" id="orgHeroLabel">—</div>
+              <div class="heroFig__delta" style="color:var(--ink-muted);font-weight:600">Structural fact — not a score</div>
+            </div>
+          </div>
+
+          <div class="kpis" id="orgKpis"></div>
+        </article>
+      </div>
+    </div>
+
+    <div class="section" id="orgBody">
+      <div class="wrap">
+        <div class="section__head">
+          <h2 class="section__title">Causes, tied to the calendar</h2>
+          <p class="section__note">Severity is a coarse band, never a number, never per person.</p>
+        </div>
+        <div class="catGrid" id="catGrid"></div>
+      </div>
+
+      <div class="wrap" style="margin-top:34px">
+        <div class="section__head">
+          <h2 class="section__title">When the team is in meetings</h2>
+          <p class="section__note">Team averages only. A cell never represents one person.</p>
+        </div>
+        <article class="card card--ridged">
+          <div class="chartHead">
+            <div>
+              <h3 class="chartHead__title">Meeting density by weekday and time block</h3>
+              <p class="chartHead__sub" id="heatCaption">—</p>
+            </div>
+            <div class="chartHead__side">
+              <span class="simTag">Simulated</span>
+              <button class="toggleBtn" id="heatTableBtn" aria-pressed="false" aria-controls="heatTable">Table</button>
+            </div>
+          </div>
+          <svg class="chart" id="heatChart" role="img" aria-label="Heatmap of average meetings per person by weekday and time block"></svg>
+          <div class="rampLegend" style="margin-top:12px">
+            <span>Fewer</span><div class="rampLegend__steps" id="heatLegend"></div><span>More</span>
+          </div>
+          <div class="tableWrap" id="heatTable" hidden></div>
+        </article>
+      </div>
+
+      <div class="wrap" style="margin-top:34px">
+        <div class="section__head">
+          <h2 class="section__title">Recommended actions</h2>
+          <p class="section__note">Process changes. The tool never names a person to check in on.</p>
+        </div>
+        <ol class="actionList" id="actionList"></ol>
+      </div>
+
+      <div class="wrap" style="margin-top:34px">
+        <div class="section__head">
+          <h2 class="section__title">What this view deliberately cannot show</h2>
+        </div>
+        <div class="grid2">
+          <article class="card card--ridged">
+            <h3 class="card__title">Withheld by design</h3>
+            <p class="card__sub">These fields are not hidden in the UI — they are never computed into this payload.</p>
+            <ul class="neverList" id="neverList" style="margin-top:16px"></ul>
+          </article>
+          <article class="card card--ridged">
+            <h3 class="card__title">Voluntary shares</h3>
+            <p class="card__sub">Employees may push their own specifics upward. That channel has its own floor.</p>
+            <div id="optinShares" style="margin-top:16px"></div>
+          </article>
+        </div>
+      </div>
+
+      <div class="wrap" style="margin-top:34px">
+        <div class="section__head">
+          <h2 class="section__title">Why it looks like this</h2>
+        </div>
+        <div class="principles" id="principles"></div>
+      </div>
+    </div>
+  </section>
+
+  </main>
+
+  <div class="wrap" style="margin-top:56px"><div class="ridge-rule"></div></div>
+
+  <footer class="footer">
+    <div class="wrap footer__in">
+      <span class="simTag">All data simulated</span>
+      <span>No real biometrics, calendars, or employees are represented anywhere in this demo.</span>
+    </div>
+  </footer>
+</div>
+
+<div class="tooltip" id="tooltip" role="status" aria-live="polite"></div>
+
+<script src="fallback-data.js"></script>
+<script src="app.js"></script>
+</body>
+</html>
