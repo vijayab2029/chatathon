@@ -1,6 +1,6 @@
 """LLM layer for Part 3.
 
-Three narrow agents over one stdlib-only, cache-first Gemini client:
+Three narrow agents over one stdlib-only, cache-first OpenAI client:
 
     agent_hypothesis.propose_hypotheses -> testable claims (validated elsewhere)
     agent_narrator.narrate              -> prose from validated evidence only
@@ -14,10 +14,11 @@ from __future__ import annotations
 from .agent_critic import deterministic_check, review
 from .agent_hypothesis import propose_hypotheses
 from .agent_narrator import allowed_numbers_for, narrate
-from .gemini import GeminiClient, load_env
+from .openai_client import OpenAIClient, LLMClient, load_env
 
 __all__ = [
-    "GeminiClient",
+    "OpenAIClient",
+    "LLMClient",
     "load_env",
     "propose_hypotheses",
     "narrate",

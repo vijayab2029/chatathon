@@ -14,7 +14,7 @@ from typing import TYPE_CHECKING, Any
 from ..models import FEATURE_VOCABULARY, OPERATORS, Hypothesis
 
 if TYPE_CHECKING:  # pragma: no cover
-    from .gemini import GeminiClient
+    from .openai_client import LLMClient
 
 __all__ = ["propose_hypotheses", "build_prompt"]
 
@@ -67,7 +67,7 @@ Return ONLY a JSON array, no prose, no markdown fences. Each element:
 
 
 def propose_hypotheses(
-    client: "GeminiClient",
+    client: "LLMClient",
     person_id: str,
     timeline_digest: dict[str, Any],
     n: int = 6,

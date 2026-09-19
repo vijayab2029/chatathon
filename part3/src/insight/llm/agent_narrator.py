@@ -14,7 +14,7 @@ from typing import TYPE_CHECKING, Any
 from ..models import ValidatedPattern
 
 if TYPE_CHECKING:  # pragma: no cover
-    from .gemini import GeminiClient
+    from .openai_client import LLMClient
 
 __all__ = ["narrate", "build_prompt", "allowed_numbers_for"]
 
@@ -90,7 +90,7 @@ Return ONLY this JSON object, no prose, no markdown fences:
 
 
 def narrate(
-    client: "GeminiClient",
+    client: "LLMClient",
     person_id: str,
     patterns: list[ValidatedPattern],
     avg_stress: float,

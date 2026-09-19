@@ -1,12 +1,22 @@
-"""Minimal, dependency-free Gemini client for the insight agents.
+"""OpenAI client for the three insight agents.
 
-Design constraints (hackathon, FREE Gemini tier: ~10 req/min, ~250/day):
-  * stdlib only -- no `requests`, no `google-generativeai`.
-  * every failure path returns None; a live demo must never crash on a 429.
-  * every successful response is cached to disk keyed on (model, prompt), so
-    re-running the demo costs ZERO API calls.
+Replaces the previous Gemini client. The public surface is unchanged, so the
+agents, pipeline and API did not have to move: construct it, check `.available`,
+call `.generate_json()`. If you need the Gemini implementation back it is in git
+history at commit 6fbb18f.
 
-ALL DATA IN THIS SYSTEM IS SYNTHETIC.
+Design constraints this file exists to satisfy:
+
+* **Never raise.** Every agent must be safe to call when the key is missing, the
+  quota is gone, or the network is down. Failures return None and the pipeline
+  falls back to deterministic templates.
+* **Cache to disk.** Keyed on sha256(model + prompt). Re-running the demo costs
+  zero API calls, which matters when you are demoing on a metered key.
+* **Back off, then fall back.** 429/503 retries with exponential backoff, then a
+  chain of alternate models before giving up.
+
+Stdlib only -- no `openai` package, no `requests`. One less install to go wrong
+on a teammate's machine ten minutes before judging.
 """
 
 from __future__ import annotations
@@ -20,25 +30,20 @@ import urllib.request
 from pathlib import Path
 from typing import Any
 
-__all__ = ["GeminiClient", "load_env", "repo_root", "parse_json_loose"]
+__all__ = ["OpenAIClient", "LLMClient", "load_env", "repo_root", "parse_json_loose"]
 
-_API_BASE = "https://generativelanguage.googleapis.com/v1beta/models"
-_DEFAULT_MODEL = "gemini-2.5-flash"
-_DEFAULT_FALLBACK = "gemini-3.5-flash-lite"
-# Verified 2026-09-19 against the live models.list endpoint: the documented
-# default fallback (gemini-2.5-flash-lite) now 404s for newer API keys --
-# "no longer available to new users". Since the fallback IS the rate-limit
-# escape hatch, we try these known-good cheap models after it rather than
-# letting the demo die on a 429.
-# Verified live on 2026-09-19 against our key: gemini-2.5-flash and
-# gemini-3.5-flash-lite return 200. gemini-2.5-flash-lite 404s (retired for new
-# keys) and gemini-3.8-flash 429s (not on our free quota) -- both are deliberately
-# absent, since a dead model in the chain costs a wasted HTTP round trip on every
-# single call and the chain exists to SAVE us during a rate limit, not burn quota.
-_EXTRA_FALLBACKS = ("gemini-2.5-flash", "gemini-flash-lite-latest")
+_API_URL = "https://api.openai.com/v1/chat/completions"
+_DEFAULT_MODEL = "gpt-4o-mini"
+_DEFAULT_FALLBACK = "gpt-4o"
+# Tried in order after the primary and fallback both fail. Keep this list short
+# and only include models verified against the project key: a dead entry costs a
+# wasted round trip on EVERY call, and the chain exists to save us during a rate
+# limit, not to burn quota. (That is not hypothetical -- two dead models in the
+# old Gemini chain turned 9 calls into 39.)
+_EXTRA_FALLBACKS: tuple[str, ...] = ()
 _BACKOFFS = (1.0, 2.0, 4.0)
 _TIMEOUT_S = 60
-_PLACEHOLDER_KEYS = ("your_key_here", "none", "changeme", "")
+_PLACEHOLDER_KEYS = ("your_key_here", "none", "changeme", "sk-...", "")
 
 
 # --------------------------------------------------------------------------
@@ -48,7 +53,6 @@ _PLACEHOLDER_KEYS = ("your_key_here", "none", "changeme", "")
 def repo_root() -> Path:
     """Repo root, derived from this file's location (.../part3/src/insight/llm)."""
     here = Path(__file__).resolve()
-    # llm -> insight -> src -> part3 -> <repo root>
     try:
         return here.parents[4]
     except IndexError:  # pragma: no cover - defensive
@@ -82,7 +86,7 @@ _ENV_LOADED = False
 
 
 def load_env(force: bool = False) -> None:
-    """Populate os.environ from part3/.env (and the repo-root .env, if any).
+    """Populate os.environ from the repo-root .env and part3/.env.
 
     The real process environment always wins; .env files only fill gaps.
     part3/.env wins over the repo-root .env. Never raises, never prints values.
@@ -105,44 +109,43 @@ def load_env(force: bool = False) -> None:
 # client
 # --------------------------------------------------------------------------
 
-class GeminiClient:
-    """Thin REST wrapper with a disk cache and graceful degradation."""
+class OpenAIClient:
+    """Cached, backoff-wrapped OpenAI chat-completions client."""
 
     def __init__(self, offline: bool = False, cache_dir: Path | None = None) -> None:
         load_env()
         self.offline = bool(offline)
-        self.model = os.environ.get("GEMINI_MODEL") or _DEFAULT_MODEL
-        self.fallback_model = os.environ.get("GEMINI_FALLBACK_MODEL") or _DEFAULT_FALLBACK
-        self._api_key = (os.environ.get("GEMINI_API_KEY") or "").strip()
-        self.cache_dir = Path(cache_dir) if cache_dir else (repo_root() / ".llm_cache")
+        self._api_key = (os.environ.get("OPENAI_API_KEY") or "").strip()
+        self.model = (os.environ.get("OPENAI_MODEL") or _DEFAULT_MODEL).strip()
+        self.fallback_model = (
+            os.environ.get("OPENAI_FALLBACK_MODEL") or _DEFAULT_FALLBACK
+        ).strip()
+        self.cache_dir = Path(cache_dir) if cache_dir else repo_root() / ".llm_cache"
         self.calls_made = 0
         self.cache_hits = 0
         self.last_error: str | None = None
 
-    # -- state ------------------------------------------------------------
-
     @property
     def available(self) -> bool:
-        """False when offline or when no usable API key is configured."""
         if self.offline:
             return False
-        return self._api_key.lower() not in _PLACEHOLDER_KEYS
+        key = self._api_key.lower()
+        return bool(self._api_key) and key not in _PLACEHOLDER_KEYS
 
     def fallback_chain(self) -> list[str]:
-        """Cheap models to try, in order, once the primary has given up."""
+        """Models to try after the primary, de-duplicated, order preserved."""
         chain: list[str] = []
-        for model in (self.fallback_model, *_EXTRA_FALLBACKS):
-            if model and model != self.model and model not in chain:
-                chain.append(model)
+        for name in (self.fallback_model, *_EXTRA_FALLBACKS):
+            if name and name != self.model and name not in chain:
+                chain.append(name)
         return chain
 
     def stats(self) -> dict[str, Any]:
-        """Demo-friendly counters. Deliberately contains no key material."""
         return {
+            "provider": "openai",
             "model": self.model,
             "fallback_model": self.fallback_model,
             "available": self.available,
-            "offline": self.offline,
             "calls_made": self.calls_made,
             "cache_hits": self.cache_hits,
             "last_error": self.last_error,
@@ -151,56 +154,49 @@ class GeminiClient:
     # -- cache ------------------------------------------------------------
 
     def _cache_path(self, model: str, prompt: str) -> Path:
-        digest = hashlib.sha256(f"{model}\n{prompt}".encode("utf-8")).hexdigest()
+        digest = hashlib.sha256(f"{model}\x00{prompt}".encode("utf-8")).hexdigest()
         return self.cache_dir / f"{digest}.txt"
 
     def _cache_read(self, model: str, prompt: str) -> str | None:
         try:
-            path = self._cache_path(model, prompt)
-            if path.is_file():
-                return path.read_text(encoding="utf-8")
+            return self._cache_path(model, prompt).read_text(encoding="utf-8")
         except OSError:
-            pass
-        return None
+            return None
 
     def _cache_write(self, model: str, prompt: str, text: str) -> None:
         try:
             self.cache_dir.mkdir(parents=True, exist_ok=True)
             self._cache_path(model, prompt).write_text(text, encoding="utf-8")
         except OSError:
-            pass  # the cache is an optimisation, never a hard requirement
+            pass  # a cache miss is not worth failing a run over
 
-    # -- network ----------------------------------------------------------
+    # -- transport --------------------------------------------------------
 
     def _post(self, model: str, prompt: str, expect_json: bool) -> tuple[str | None, int | None]:
-        """One HTTP attempt. Returns (text, http_status_or_None).
-
-        Never raises. The API key only ever appears in a request header; it is
-        never logged, printed or stored in an error message.
-        """
-        generation_config: dict[str, Any] = {"temperature": 0.4}
+        payload: dict[str, Any] = {
+            "model": model,
+            "messages": [{"role": "user", "content": prompt}],
+            "temperature": 0.4,
+        }
         if expect_json:
-            generation_config["responseMimeType"] = "application/json"
-        body = json.dumps(
-            {
-                "contents": [{"parts": [{"text": prompt}]}],
-                "generationConfig": generation_config,
-            }
-        ).encode("utf-8")
+            # Requires the literal word "json" somewhere in the prompt; every
+            # agent prompt in this package says "Return ONLY this JSON object".
+            payload["response_format"] = {"type": "json_object"}
+
         request = urllib.request.Request(
-            f"{_API_BASE}/{model}:generateContent",
-            data=body,
+            _API_URL,
+            data=json.dumps(payload).encode("utf-8"),
             method="POST",
             headers={
                 "Content-Type": "application/json",
-                "x-goog-api-key": self._api_key,
+                "Authorization": f"Bearer {self._api_key}",
             },
         )
         try:
             self.calls_made += 1
             with urllib.request.urlopen(request, timeout=_TIMEOUT_S) as response:
-                payload = json.loads(response.read().decode("utf-8"))
-            return _extract_text(payload), 200
+                body = json.loads(response.read().decode("utf-8"))
+            return _extract_text(body), 200
         except urllib.error.HTTPError as exc:
             self.last_error = f"HTTP {exc.code} ({model}): {_safe_error_detail(exc, self._api_key)}"
             return None, exc.code
@@ -210,13 +206,8 @@ class GeminiClient:
 
     # -- public API -------------------------------------------------------
 
-    def generate(
-        self,
-        prompt: str,
-        *,
-        expect_json: bool = True,
-        max_retries: int = 3,
-    ) -> str | None:
+    def generate(self, prompt: str, *, expect_json: bool = True,
+                 max_retries: int = 3) -> str | None:
         """Return model text, or None on any failure. Cache-first, never raises."""
         if not prompt:
             return None
@@ -236,14 +227,11 @@ class GeminiClient:
                 self._cache_write(self.model, prompt, text)
                 return text
             if status in (429, 503) or status is None:
-                # rate limited / overloaded / transient network: back off
                 if index < attempts - 1:
                     time.sleep(_BACKOFFS[index])
-                    continue
-                break
-            break  # 4xx that retrying will not fix
+                continue
+            break  # 4xx that retrying cannot fix
 
-        # last resort: one shot each at the cheaper fallback models
         for model in self.fallback_chain():
             cached = self._cache_read(model, prompt)
             if cached is not None:
@@ -256,17 +244,17 @@ class GeminiClient:
 
         return None
 
-    def generate_json(
-        self,
-        prompt: str,
-        *,
-        max_retries: int = 3,
-    ) -> dict[str, Any] | list[Any] | None:
-        """generate() plus tolerant JSON parsing. None if anything goes wrong."""
+    def generate_json(self, prompt: str, *, max_retries: int = 3
+                      ) -> dict[str, Any] | list[Any] | None:
         text = self.generate(prompt, expect_json=True, max_retries=max_retries)
         if not text:
             return None
         return parse_json_loose(text)
+
+
+# Provider-neutral alias. Downstream code should prefer this name so a future
+# provider swap does not touch the agents again.
+LLMClient = OpenAIClient
 
 
 # --------------------------------------------------------------------------
@@ -274,75 +262,63 @@ class GeminiClient:
 # --------------------------------------------------------------------------
 
 def _safe_error_detail(exc: urllib.error.HTTPError, api_key: str, limit: int = 180) -> str:
-    """Short, key-redacted reason from an HTTP error body. For demo debugging."""
+    """Error body with the key redacted. The key must never reach a log."""
     try:
-        body = exc.read().decode("utf-8", "replace")
+        detail = exc.read().decode("utf-8", errors="replace")
     except Exception:
-        return exc.reason if isinstance(getattr(exc, "reason", None), str) else "no detail"
+        detail = getattr(exc, "reason", "") or ""
     try:
-        message = str((json.loads(body).get("error") or {}).get("message") or body)
-    except (ValueError, AttributeError, TypeError):
-        message = body
+        parsed = json.loads(detail)
+        if isinstance(parsed, dict):
+            detail = str(parsed.get("error", {}).get("message") or detail)
+    except Exception:
+        pass
     if api_key:
-        message = message.replace(api_key, "<redacted>")
-    message = " ".join(message.split())
-    return message[:limit] or "no detail"
+        detail = detail.replace(api_key, "***")
+    return detail[:limit]
 
 
 def _extract_text(payload: dict[str, Any]) -> str | None:
-    """Pull the concatenated text out of a generateContent response."""
     try:
-        chunks: list[str] = []
-        for candidate in payload.get("candidates") or []:
-            parts = ((candidate or {}).get("content") or {}).get("parts") or []
-            for part in parts:
-                if part.get("thought"):
-                    continue
-                piece = part.get("text")
-                if piece:
-                    chunks.append(piece)
-            if chunks:
-                break
-        joined = "".join(chunks).strip()
-        return joined or None
-    except Exception:
+        content = payload["choices"][0]["message"]["content"]
+    except (KeyError, IndexError, TypeError):
         return None
+    if not isinstance(content, str) or not content.strip():
+        return None
+    return content
 
 
 def _strip_fences(text: str) -> str:
-    stripped = text.strip()
-    if stripped.startswith("```"):
-        stripped = stripped[3:]
-        if stripped[:4].lower() == "json":
-            stripped = stripped[4:]
-        end = stripped.rfind("```")
-        if end != -1:
-            stripped = stripped[:end]
-    return stripped.strip()
+    out = text.strip()
+    if out.startswith("```"):
+        out = out.split("\n", 1)[-1] if "\n" in out else out[3:]
+        if out.rstrip().endswith("```"):
+            out = out.rstrip()[:-3]
+    return out.strip()
 
 
 def _slice_outermost(text: str, open_ch: str, close_ch: str) -> str | None:
     start = text.find(open_ch)
     end = text.rfind(close_ch)
-    if start != -1 and end > start:
-        return text[start:end + 1]
-    return None
+    if start == -1 or end == -1 or end <= start:
+        return None
+    return text[start:end + 1]
 
 
 def parse_json_loose(text: str) -> dict[str, Any] | list[Any] | None:
-    """Parse JSON that may be fenced or wrapped in prose. None on failure."""
+    """Parse JSON that may arrive fenced or wrapped in prose. None on failure."""
     if not text:
         return None
-    body = _strip_fences(text)
+    candidate = _strip_fences(text)
     try:
-        return json.loads(body)
-    except (ValueError, TypeError):
+        return json.loads(candidate)
+    except Exception:
         pass
-    for open_ch, close_ch in (("[", "]"), ("{", "}")):
-        candidate = _slice_outermost(body, open_ch, close_ch)
-        if candidate:
+    for open_ch, close_ch in (("{", "}"), ("[", "]")):
+        sliced = _slice_outermost(candidate, open_ch, close_ch)
+        if sliced:
             try:
-                return json.loads(candidate)
-            except (ValueError, TypeError):
+                return json.loads(sliced)
+            except Exception:
                 continue
     return None

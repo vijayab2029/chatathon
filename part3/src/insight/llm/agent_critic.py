@@ -19,7 +19,7 @@ from typing import TYPE_CHECKING, Any, Iterable
 from ..models import CriticVerdict
 
 if TYPE_CHECKING:  # pragma: no cover
-    from .gemini import GeminiClient
+    from .openai_client import LLMClient
 
 __all__ = ["review", "deterministic_check", "build_prompt"]
 
@@ -157,7 +157,7 @@ Return ONLY this JSON object, no prose, no markdown fences:
 
 
 def review(
-    client: "GeminiClient",
+    client: "LLMClient",
     insight_text: str,
     suggested_action: str,
     allowed_numbers: list[float],

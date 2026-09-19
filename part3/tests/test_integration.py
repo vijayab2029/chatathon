@@ -3,7 +3,7 @@
 The headline guarantee here is test_no_invented_numbers: in offline mode the
 narration is templated from validated evidence, so EVERY number in a person's
 insight_text must be traceable to that person's own evidence. That is the
-mechanical form of "Gemini agents propose and explain; Python proves".
+mechanical form of "LLM agents propose and explain; Python proves".
 
 ALL DATA USED HERE IS SYNTHETIC.
 """

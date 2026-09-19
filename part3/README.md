@@ -9,7 +9,7 @@
 
 Part 3 joins Part 1's daily stress scores to Part 2's calendar features, then
 finds — per person — which calendar shapes precede a stress spike. The design
-commitment is one line: **Gemini agents propose and explain; Python proves.**
+commitment is one line: **LLM agents propose and explain; Python proves.**
 The LLM never produces a number. It emits hypotheses in a tiny DSL
 (`feature op threshold @ lag`), and `validator.py` computes lift, Pearson r, and
 a 1000-iteration permutation p-value in plain Python. What that buys us: a
@@ -48,7 +48,7 @@ owns policy. `part3/tests/test_privacy.py` enforces all of this.
  meeting_features.json ──┘                          │
  (P2)                                               ▼
                        ┌───────────────────────────────────────────┐
-                  A1   │ HYPOTHESISE  (Gemini + always-on baseline)│
+                  A1   │ HYPOTHESISE  (OpenAI + always-on baseline)│
                        │ emits DSL objects only, never prose       │
                        └───────────────────────┬───────────────────┘
                                                ▼
@@ -60,12 +60,12 @@ owns policy. `part3/tests/test_privacy.py` enforces all of this.
                        └───────────────────────┬───────────────────┘
                                                ▼ survivors only
                        ┌───────────────────────────────────────────┐
-                  A3   │ NARRATE  (Gemini; templates when offline) │
+                  A3   │ NARRATE  (OpenAI; templates when offline) │
                        │ sees ONLY validated stats                 │
                        └───────────────────────┬───────────────────┘
                                                ▼
                        ┌───────────────────────────────────────────┐
-                  A4   │ CRITIQUE (deterministic rules + Gemini)   │
+                  A4   │ CRITIQUE (deterministic rules + OpenAI)   │
                        │ no diagnosis · no blame · no unsupported  │
                        │ numbers — always runs, even with no key   │
                        └───────────────────────┬───────────────────┘
@@ -82,7 +82,7 @@ on a quota.
 
 ```bash
 pip install -r part3/requirements.txt
-cp part3/.env.example part3/.env      # then put your real GEMINI_API_KEY in it
+cp .env.example .env                  # then put your real OPENAI_API_KEY in it
 ```
 
 `part3/.env` is gitignored; the key is never printed. Everything except
@@ -101,7 +101,7 @@ python part3/contracts/make_fixtures.py --people 12 --days 28
 # run the pipeline with ZERO LLM calls (safest demo path)
 cd part3/src && python -m insight.pipeline --offline
 
-# run it with the Gemini agents enabled
+# run it with the OpenAI agents enabled
 cd part3/src && python -m insight.pipeline
 
 # useful flags: --limit 3   --out ../data/out   --stress PATH   --meetings PATH
@@ -256,9 +256,9 @@ demo touch — it shows a rejected narration beside its approved replacement.
 Render the `data_provenance: "SIMULATED"` label; it is on every object and every
 API response so you never have to special-case it.
 
-## Gemini free tier, rate limits, and `--offline`
+## Rate limits and `--offline`
 
-Free-tier `gemini-2.5-flash` allows roughly **10 requests/minute and 250/day**,
+The pipeline spends 3 agent calls per person, so a full 12-person run costs ~36 calls.
 and a full online run costs ~15 calls *per person* (A1 + A3 + A4). Twelve people
 will exhaust a daily quota fast. Three safeguards:
 
@@ -266,8 +266,8 @@ will exhaust a daily quota fast. Three safeguards:
    the same demo costs zero new calls — the summary reports `cache_hits`.
 2. **Baseline hypotheses always run**, so the statistical layer is fully
    functional with no LLM at all.
-3. **Fallback chain:** `gemini-2.5-flash` → exponential backoff on 429 →
-   `gemini-2.5-flash-lite` → deterministic templates. Concurrency is capped by a
+3. **Fallback chain:** primary -> exponential backoff on 429 ->
+   `OPENAI_FALLBACK_MODEL` -> deterministic templates. Concurrency is capped by a
    semaphore.
 
 **`--offline` (or `POST /analyze {"offline": true}`) forces the template path and

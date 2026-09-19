@@ -2,10 +2,10 @@
 
 ALL DATA IS SYNTHETIC.
 
-The pipeline, in one line: Gemini agents propose and explain, Python proves.
+The pipeline, in one line: LLM agents propose and explain, Python proves.
 
     load -> digest -> [A1 hypothesise] -> [A2 validate] -> [A3 narrate] -> [A4 critique]
-                           (Gemini)         (pure Python)     (Gemini)       (Gemini +
+                            (OpenAI)        (pure Python)     (OpenAI)      (OpenAI +
                                             THE GATE                         deterministic)
 
 Every stage degrades. With no API key, `--offline`, or a rate-limited account, the
@@ -231,7 +231,7 @@ def run_pipeline(stress_csv: Path | None = None,
                  limit: int | None = None) -> dict[str, Any]:
     from .loaders import load_stress_scores, load_meeting_events, build_timelines
     from .emit import build_employee_insight, aggregate_team_patterns, write_outputs
-    from .llm.gemini import GeminiClient
+    from .llm.openai_client import LLMClient
 
     stress_csv = Path(stress_csv) if stress_csv else DEFAULT_FIXTURES / "stress_scores.csv"
     meetings_json = Path(meetings_json) if meetings_json else DEFAULT_FIXTURES / "meeting_features.json"
@@ -246,8 +246,8 @@ def run_pipeline(stress_csv: Path | None = None,
     if limit:
         person_ids = person_ids[:limit]
 
-    client = GeminiClient(offline=offline)
-    mode = "OFFLINE (deterministic only)" if not client.available else "Gemini agents ENABLED"
+    client = LLMClient(offline=offline)
+    mode = "OFFLINE (deterministic only)" if not client.available else "LLM agents ENABLED"
     print(f"Analysing {len(person_ids)} people | {mode}")
 
     insights = {}

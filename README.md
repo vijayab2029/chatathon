@@ -1,54 +1,71 @@
 # chatathon
 
-## Gemini API configuration
+Team Stress Insight Tool — WHOOP track, Chatathon 2026.
 
-Copy `.env.example` to `.env` at the repo root and add your key from
-<https://aistudio.google.com/apikey>. `.env` is gitignored.
+**ALL DATA IN THIS PROJECT IS SYNTHETIC.** No real biometrics and no real
+calendars are used anywhere.
+
+See [`part3/README.md`](part3/README.md) for the correlation & insight engine
+and [`docs/superpowers/specs/`](docs/superpowers/specs/) for the design spec.
+
+## LLM provider configuration
+
+The project uses **OpenAI**. Copy `.env.example` to `.env` at the repo root and
+add your key from <https://platform.openai.com/api-keys>. `.env` is gitignored.
 
 ```
-GEMINI_API_KEY=...
-GEMINI_MODEL=gemini-3.8-flash
-GEMINI_FALLBACK_MODEL=gemini-3.5-flash-lite
+OPENAI_API_KEY=...
+OPENAI_MODEL=gpt-4o-mini
+OPENAI_FALLBACK_MODEL=gpt-4o
 ```
 
-`part3/src/insight/llm/gemini.py` loads the repo-root `.env` first, then
+`part3/src/insight/llm/openai_client.py` loads the repo-root `.env` first, then
 `part3/.env` (part3 wins), and the real process environment beats both.
+
+The client is stdlib-only — it calls the REST endpoint through `urllib`, so
+there is no `openai` package to install.
+
+### Switching providers
+
+Only `openai_client.py` is provider-specific. The three agents, the validator,
+the pipeline and the API all talk to the provider-neutral `LLMClient` alias, so
+a future swap means writing one new client and repointing that alias.
+
+The previous Gemini implementation is preserved in git history at commit
+`6fbb18f` if it is ever needed back.
 
 ## Rate limits
 
-Free-tier quota is the binding constraint on this project, not cost.
-Limits are enforced **per Google Cloud project, not per API key**, and daily
-quotas reset at **midnight Pacific**. Exceeding any one dimension returns
-`429 RESOURCE_EXHAUSTED`.
+Quota is the binding constraint on this project, not cost. The pipeline spends
+**3 agent calls per person** (hypothesis, narrator, critic), so a full 12-person
+run costs ~36 calls.
 
-| Model | Free-tier RPD | Notes |
-|---|---|---|
-| `gemini-3.8-flash` | **~20/day** | Most capable free model. Quota is tiny. |
-| `gemini-3.7-flash` / `3.6` / `3.5-flash` | ~20/day | Same bracket as 3.8. |
-| `gemini-3.5-flash-lite` | **~500/day** | Best free throughput. Current fallback. |
-| `gemini-3.1-flash-lite` | ~500/day | Equivalent bracket. |
-| `gemini-2.5-flash` | ~250/day | Older generation. |
-| `gemini-2.5-flash-lite` | ~1,000/day | **404s for keys created recently.** |
-| `gemini-3.1-pro` | n/a | Paid tier only — no free quota. |
+Three mitigations are already in place, and they matter more than the specific
+provider:
 
-Sourcing caveat: Google removed the per-model RPM/TPM/RPD table from
-<https://ai.google.dev/gemini-api/docs/rate-limits> and now exposes live limits
-only in AI Studio. The Flash/Flash-Lite figures above are community-reported
-(Sept 2026) and the 2.5-series figures date to Jan 2026. Treat them as
-order-of-magnitude. **Authoritative per-project limits:**
-<https://aistudio.google.com/app/ratelimits>
+- **Disk cache** keyed on `(model, prompt)` under `.llm_cache/` — re-running the
+  demo costs **zero** API calls. Run it once before judging and the live demo is
+  free and instant.
+- **Fallback chain** on 429/503: primary → `OPENAI_FALLBACK_MODEL` → exponential
+  backoff → deterministic non-LLM output.
+- **`--offline` flag**: the engine produces real, validated insights with no LLM
+  at all. Baseline hypotheses still run, the validator still proves them, and
+  template narration is built from the same validated numbers.
 
-### Consequences for the insight engine
+Run with `--offline` while iterating so you arrive at the demo with quota intact.
 
-The Part 3 pipeline spends up to 4 agent calls (hypothesis, narrator, critic)
-per analysis. At ~20 RPD, `gemini-3.8-flash` supports roughly **five full runs
-per day** before the fallback chain takes over. Mitigations already in place:
+### A lesson worth keeping
 
-- **Disk cache** keyed on `(model, prompt)` — re-running the demo costs zero calls.
-- **Fallback chain** on 429: primary → `GEMINI_FALLBACK_MODEL` → Flash-Lite
-  variants → deterministic non-LLM output.
-- **Thinking tokens count against TPM.** A 5-token prompt to `gemini-3.8-flash`
-  measured 62 total tokens, 56 of them thinking.
+An earlier Gemini configuration used `gemini-3.8-flash`, which carries only
+**~20 requests/day** on the free tier. It was quota-exhausted, so every call
+failed, burned three retries, then walked a fallback chain that itself contained
+a retired model. One logical call cost **five** HTTP round trips, and a 3-person
+run made 39 calls instead of 9.
 
-Run the demo with `--offline` while iterating so you arrive at the live demo
-with quota intact.
+Two takeaways that still apply to the OpenAI setup:
+
+1. **Verify every model in the fallback chain actually works with your key.** A
+   dead entry costs a wasted round trip on *every single call*. The chain exists
+   to save you during a rate limit, not to burn quota faster.
+2. **Count HTTP attempts, not logical calls.** `calls_made` counts attempts on
+   purpose — it is what revealed the problem.

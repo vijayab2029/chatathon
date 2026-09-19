@@ -287,7 +287,7 @@ def test_shape_never_raises_on_junk():
 def test_shape_preserves_id_when_supplied():
     parsed = validate_hypothesis_shape(
         {
-            "id": "gemini-7",
+            "id": "llm-7",
             "feature": "focus_time_minutes",
             "operator": "<",
             "threshold": 45.0,
@@ -296,7 +296,7 @@ def test_shape_preserves_id_when_supplied():
         }
     )
     assert parsed is not None
-    assert "gemini-7" in parsed.id
+    assert "llm-7" in parsed.id
 
 
 # --------------------------------------------------------------------------

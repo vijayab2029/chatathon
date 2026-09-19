@@ -42,7 +42,7 @@ TEAM_JSON = OUT_DIR / "team_correlations.json"
 app = FastAPI(
     title="Part 3 -- Correlation & Insight Engine (SIMULATED DATA)",
     description=(
-        "Gemini proposes, Python proves. All data is synthetic. "
+        "LLM agents propose, Python proves. All data is synthetic. "
         "employee_insight.json is private/per-person; team_correlations.json "
         "carries no person_id and is ungated -- Part 4 owns the k>=5 gate."
     ),
