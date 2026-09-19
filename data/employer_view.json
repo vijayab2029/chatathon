@@ -1,0 +1,91 @@
+{
+  "schema_version": "1.0",
+  "_comment": "SYNTHETIC DATA. Part 4 -> Part 5 contract. Non-personal by construction: category + coarse severity band + recommended action only. No scores, no IDs, no per-person rows. Replace with the real Part 4 output; keep key names identical.",
+  "synthetic": true,
+  "team_id": "TEAM-NORTH",
+  "team_label": "Platform — North",
+  "generated_at": "2026-09-16",
+  "k_anonymity": {
+    "threshold": 5,
+    "team_size": 9,
+    "satisfied": true
+  },
+  "structural_summary": {
+    "hero": { "label": "Meetings per person on Wednesdays", "value": 5.2, "unit": "" },
+    "tiles": [
+      { "label": "Meetings / person / week", "value": 21.4, "unit": "" },
+      { "label": "Recurring meetings with no agenda", "value": 41, "unit": "%" },
+      { "label": "Invites sent outside 09:00–18:00", "value": 18, "unit": "%" },
+      { "label": "Median gap between meetings", "value": 10, "unit": "min" }
+    ]
+  },
+  "meeting_density": {
+    "caption": "Team average meetings per person, by weekday and time block.",
+    "days": ["Mon", "Tue", "Wed", "Thu", "Fri"],
+    "blocks": ["08–10", "10–12", "12–14", "14–16", "16–18"],
+    "grid": [
+      [0.4, 1.2, 0.6, 1.1, 0.5],
+      [0.6, 1.5, 0.8, 1.3, 0.7],
+      [1.1, 2.3, 1.4, 2.1, 1.2],
+      [0.7, 1.6, 0.9, 1.4, 0.8],
+      [0.5, 1.0, 0.4, 0.8, 0.9]
+    ]
+  },
+  "causal_categories": [
+    {
+      "category": "Meeting density",
+      "structural_fact": "Wednesdays average 5.2 meetings per person, with no scheduled gap over 30 minutes.",
+      "severity_band": "High",
+      "trend": "up",
+      "recommended_action": "Declare a protected 2-hour no-meeting block on Wednesday mornings for the whole team."
+    },
+    {
+      "category": "Recovery buffer",
+      "structural_fact": "The median gap between consecutive meetings across the team is 10 minutes.",
+      "severity_band": "High",
+      "trend": "flat",
+      "recommended_action": "Change the calendar default to 25- and 50-minute meetings so a buffer exists by default."
+    },
+    {
+      "category": "Agenda hygiene",
+      "structural_fact": "41% of recurring meetings have no agenda attached at send time.",
+      "severity_band": "Elevated",
+      "trend": "up",
+      "recommended_action": "Require an agenda field on recurring invites; auto-cancel any recurring meeting with no agenda for three cycles."
+    },
+    {
+      "category": "Workload distribution",
+      "structural_fact": "Meeting load between the lightest and heaviest quartile of the team differs by 2.3×.",
+      "severity_band": "Elevated",
+      "trend": "up",
+      "recommended_action": "Run a workload rebalancing check-in at this week's team sync — with the whole team, not selected individuals."
+    },
+    {
+      "category": "After-hours load",
+      "structural_fact": "18% of invites are sent outside 09:00–18:00 local time.",
+      "severity_band": "Moderate",
+      "trend": "flat",
+      "recommended_action": "Turn on delayed-send defaults for invites composed after 18:00."
+    },
+    {
+      "category": "Focus fragmentation",
+      "structural_fact": "The longest uninterrupted block on a median day is 47 minutes.",
+      "severity_band": "Low",
+      "trend": "down",
+      "recommended_action": "No action needed this cycle — continue monitoring."
+    }
+  ],
+  "opt_in_shares": {
+    "count": 2,
+    "min_reportable": 3,
+    "reportable": false,
+    "suppressed_message": "2 people opted to share specifics. Below the reporting floor of 3, so their content is withheld."
+  },
+  "never_shown": [
+    "Any individual's stress score",
+    "Any name, employee ID, or re-identifiable attribute",
+    "Any per-person biometric reading",
+    "Counts of affected people below the k-anonymity threshold",
+    "Any ranking or comparison of team members"
+  ]
+}
