@@ -46,10 +46,17 @@ CALENDAR_PATH = DATA_DIR / "synthetic_calendar.json"
 FEATURES_PATH = DATA_DIR / "meeting_features.json"
 SUMMARY_PATH = DATA_DIR / "team_structural_summary.json"
 
-START_DATE = "2026-09-13"  # Sunday
+START_DATE = "2026-08-23"  # Sunday
 END_DATE = "2026-09-19"    # Saturday
-# NOTE: 2026-09-13 is a Sunday and 2026-09-19 a Saturday. Weekday names are always
-# derived from the real calendar (2026-09-15 -> Tuesday), never hardcoded.
+# 28 days = exactly 4 Sun-Sat weeks, so week boundaries fall on real week boundaries.
+# Weekday names are always derived from the real calendar, never hardcoded.
+#
+# WEEK ARC (index 0-3), driving the longitudinal trajectory the demo charts:
+#   Week 1  2026-08-23 .. 2026-08-29   baseline load
+#   Week 2  2026-08-30 .. 2026-09-05   escalation
+#   Week 3  2026-09-06 .. 2026-09-12   crunch
+#   Week 4  2026-09-13 .. 2026-09-19   crunch (sustained)
+WEEK_STARTS = ["2026-08-23", "2026-08-30", "2026-09-06", "2026-09-13"]
 
 COHORT = ["user_101", "user_102", "user_103", "user_104", "user_105", "user_106"]
 
@@ -87,14 +94,29 @@ PROFILES = {
     "user_106": {"cohort": "baseline", "agenda_rate": 0.65},
 }
 
-# --- user_101: the high-stress subject -------------------------------------------------
-# Tue/Wed/Thu: 5-7 meetings, 0-minute transitions, lunch window colonized, after-hours.
-HS_TUE = [("09:00", 60), ("10:00", 30), ("10:45", 45), ("11:30", 60), ("12:35", 70), ("17:45", 45)]
-HS_WED = [("08:00", 30), ("09:00", 45), ("09:45", 60), ("11:00", 45), ("11:45", 75), ("13:00", 60), ("17:40", 50)]
-HS_THU = [("09:30", 60), ("10:30", 45), ("11:20", 90), ("12:55", 65), ("18:00", 45)]
-# Mon/Fri: still heavy, but Monday keeps a real lunch gap (gives Part 3 within-person contrast).
-HS_MON = [("09:00", 60), ("10:00", 30), ("11:00", 60), ("13:00", 60)]
-HS_FRI = [("08:15", 45), ("09:30", 60), ("10:35", 40), ("11:45", 45), ("12:35", 60)]
+# --- user_101: the chronic burnout trajectory ------------------------------------------
+# The whole point of this person is that the schedule degrades WEEK OVER WEEK. Nothing
+# about their physiology is special in Part 1 - only this escalating calendar exposure is.
+#
+# Week 3/4 crunch: 5-7 meetings Tue-Thu, 0-5 minute transitions, the 11:30-2:00 window
+# fully colonized, and late/early sessions. Several days exceed 4 back-to-back
+# transitions, which is the trigger Part 1's lag effect is verified against.
+HS_CRUNCH_TUE = [("08:15", 40), ("09:00", 60), ("10:00", 30), ("10:30", 45),
+                 ("11:20", 70), ("12:35", 75), ("17:40", 50)]
+HS_CRUNCH_WED = [("08:00", 30), ("08:30", 45), ("09:15", 60), ("10:20", 40),
+                 ("11:05", 85), ("12:35", 70), ("17:45", 45)]
+HS_CRUNCH_THU = [("09:30", 60), ("10:30", 45), ("11:15", 75), ("12:30", 60),
+                 ("13:35", 55), ("18:00", 45)]
+HS_CRUNCH_MON = [("09:00", 60), ("10:00", 45), ("11:30", 60), ("12:35", 70), ("16:30", 75)]
+HS_CRUNCH_FRI = [("08:15", 45), ("09:00", 60), ("10:05", 40), ("11:45", 75), ("13:00", 50)]
+
+# Week 2 escalation: 4-5 meetings/day, at least 2 back-to-back transitions every day,
+# lunch starting to disappear mid-week, first after-hours session appears.
+HS_W2_MON = [("09:00", 60), ("10:00", 30), ("10:35", 45), ("13:30", 60)]
+HS_W2_TUE = [("09:30", 45), ("10:15", 60), ("11:20", 55), ("13:00", 45), ("16:00", 60)]
+HS_W2_WED = [("09:00", 30), ("09:30", 60), ("10:35", 45), ("11:45", 60), ("12:50", 55)]
+HS_W2_THU = [("09:00", 60), ("10:00", 45), ("11:00", 60), ("12:05", 40), ("17:45", 40)]
+HS_W2_FRI = [("09:15", 45), ("10:00", 60), ("11:05", 40), ("14:00", 45)]
 
 # --- user_102 / user_104: the balanced cohort ------------------------------------------
 # 2-3 meetings/day, every gap >= 15 min, lunch window never fully consumed, agendas always.
@@ -113,22 +135,31 @@ BASE_D = [("08:45", 60), ("11:00", 45), ("11:45", 60), ("13:00", 45)]
 BASE_E = [("09:15", 45), ("10:00", 30), ("14:00", 60)]
 
 # Weekday index 0=Mon .. 4=Fri -> template. Balanced/baseline users rotate the same
-# template set by a per-person offset so no two colleagues share an identical week.
+# template set by a per-person offset AND by week index, so no two colleagues share an
+# identical week and no one repeats the same week four times. Their load stays flat by
+# design - only user_101's exposure escalates.
 WEEK_TEMPLATES = {
-    "high_stress": [HS_MON, HS_TUE, HS_WED, HS_THU, HS_FRI],
     "balanced": [BAL_A, BAL_B, BAL_C, BAL_D, BAL_E],
     "baseline": [BASE_A, BASE_B, BASE_C, BASE_D, BASE_E],
 }
+
+# user_101's four-week arc, one row per week (index 0-3), each Mon..Fri.
+# Week 1 deliberately reuses the ordinary baseline load: the burnout is something the
+# calendar does to this person over a month, not a trait they start with.
+HIGH_STRESS_WEEKS = [
+    [BASE_A, BASE_B, BASE_C, BASE_D, BASE_E],
+    [HS_W2_MON, HS_W2_TUE, HS_W2_WED, HS_W2_THU, HS_W2_FRI],
+    [HS_CRUNCH_MON, HS_CRUNCH_TUE, HS_CRUNCH_WED, HS_CRUNCH_THU, HS_CRUNCH_FRI],
+    # Week 4 sustains the crunch but resequences it, so the fourth week is a second
+    # bad week rather than a copy-paste of the third.
+    [HS_CRUNCH_MON, HS_CRUNCH_THU, HS_CRUNCH_TUE, HS_CRUNCH_WED, HS_CRUNCH_FRI],
+]
 
 # Rotation offset per person (0 = no rotation). Keeps constraints intact because every
 # template inside a cohort satisfies that cohort's constraints on its own.
 ROTATION = {"user_101": 0, "user_102": 0, "user_103": 0, "user_104": 3, "user_105": 1, "user_106": 2}
 
-# Occasional weekend work, so the 7-day window has realistic non-empty edges.
-WEEKEND_EVENTS = {
-    "user_101": [("2026-09-19", [("10:00", 90)])],   # Saturday incident follow-up
-    "user_105": [("2026-09-13", [("16:00", 45)])],   # Sunday release readiness
-}
+# Weekends carry zero scheduled work meetings for everyone, across all four weeks.
 
 # --------------------------------------------------------------------------------------
 # Meeting title catalog (semantic layer)
@@ -222,20 +253,33 @@ def is_after_hours(start: datetime, end: datetime) -> bool:
     return start < clock(start, AFTER_HOURS_EARLIEST_START) or end > clock(end, AFTER_HOURS_LATEST_END)
 
 
+def week_index(date_str: str) -> int:
+    """0-3: which of the four Sun-Sat weeks this date falls in."""
+    return (parse_date(date_str) - parse_date(START_DATE)).days // 7
+
+
 def templates_for(person_id: str) -> dict[str, list[tuple[str, int]]]:
-    """Return {date_str: template} for this person across the whole window."""
+    """Return {date_str: template} for this person across the whole 28-day window.
+
+    Weekend dates are simply absent - nobody has scheduled work meetings on a
+    Saturday or Sunday. (They still get a zero-load rollup row in Output B.)
+    """
     profile = PROFILES[person_id]
-    week = WEEK_TEMPLATES[profile["cohort"]]
     offset = ROTATION[person_id]
     plan: dict[str, list[tuple[str, int]]] = {}
 
     for date_str in date_range(START_DATE, END_DATE):
         weekday = parse_date(date_str).weekday()  # 0=Mon .. 6=Sun
-        if weekday <= 4:  # work meetings are primarily Mon-Fri
-            plan[date_str] = week[(weekday + offset) % len(week)]
-
-    for date_str, blocks in WEEKEND_EVENTS.get(person_id, []):
-        plan[date_str] = blocks
+        if weekday > 4:
+            continue
+        wk = week_index(date_str)
+        if profile["cohort"] == "high_stress":
+            week = HIGH_STRESS_WEEKS[wk]
+            plan[date_str] = week[weekday]
+        else:
+            # Flat load, but rotated by person and by week so no week is a literal repeat.
+            week = WEEK_TEMPLATES[profile["cohort"]]
+            plan[date_str] = week[(weekday + offset + wk) % len(week)]
 
     return plan
 
@@ -350,8 +394,18 @@ def longest_stretch(day_events: list[dict]) -> int:
 
 
 def extract_features(events: list[dict]) -> list[dict]:
-    """Daily rollups grouped by (person_id, date). Days with no meetings are omitted."""
-    grouped: dict[tuple[str, str], list[dict]] = {}
+    """Daily rollups grouped by (person_id, date), one row per person per calendar day.
+
+    Every person-day in the window gets a row, including meeting-free weekends, which
+    emit an explicit zero-load record rather than being absent. Part 1 and Part 3 join
+    on (person_id, date), so a dense grid means a rest day reads as a measured zero
+    instead of a missing key.
+    """
+    grouped: dict[tuple[str, str], list[dict]] = {
+        (person_id, date_str): []
+        for person_id in COHORT
+        for date_str in date_range(START_DATE, END_DATE)
+    }
     for e in events:
         grouped.setdefault((e["person_id"], e["date"]), []).append(e)
 
@@ -369,8 +423,11 @@ def extract_features(events: list[dict]) -> list[dict]:
             "back_to_back_count": back_to_back_pairs(day_events),
             "no_lunch_buffer": not has_lunch_buffer(day_events, date_str),
             "after_hours_count": sum(1 for e in day_events if e["is_after_hours"]),
-            "no_agenda_pct": round(no_agenda / total, 2),
-            "avg_attendee_count": round(sum(e["attendee_count"] for e in day_events) / total, 2),
+            # A meeting-free day has no meetings to lack an agenda, so both ratios are
+            # 0.0 rather than undefined.
+            "no_agenda_pct": round(no_agenda / total, 2) if total else 0.0,
+            "avg_attendee_count": (
+                round(sum(e["attendee_count"] for e in day_events) / total, 2) if total else 0.0),
             "longest_continuous_meeting_stretch_min": longest_stretch(day_events),
         })
     return features
@@ -414,7 +471,12 @@ def hot_transition_window(events: list[dict]) -> str:
 def build_summary(events: list[dict], features: list[dict]) -> dict:
     days = len(date_range(START_DATE, END_DATE))
     total_meetings = len(events)
-    person_days = len(features)  # person-days with >= 1 meeting
+    # Denominator is WORKING person-days (>= 1 meeting), not all 168 person-days. A
+    # meeting-free Sunday trivially "has a lunch buffer" and would dilute every rate
+    # here toward a flattering number; rates are about how working days are shaped.
+    # This also keeps the metric comparable to the 7-day summary Part 4 saw first.
+    working_days = [f for f in features if f["total_meetings"] > 0]
+    person_days = len(working_days)
 
     b2b_meetings = 0
     grouped: dict[tuple[str, str], list[dict]] = {}
@@ -425,7 +487,7 @@ def build_summary(events: list[dict], features: list[dict]) -> dict:
         b2b_meetings += len(back_to_back_event_ids(day_events))
 
     pct_b2b = round(100 * b2b_meetings / total_meetings, 1)
-    pct_no_lunch = round(100 * sum(1 for f in features if f["no_lunch_buffer"]) / person_days, 1)
+    pct_no_lunch = round(100 * sum(1 for f in working_days if f["no_lunch_buffer"]) / person_days, 1)
     pct_no_agenda = round(100 * sum(1 for e in events if not e["has_agenda"]) / total_meetings, 1)
     pct_after_hours = round(100 * sum(1 for e in events if e["is_after_hours"]) / total_meetings, 1)
 
@@ -536,46 +598,82 @@ def privacy_scan(summary: dict) -> tuple[bool, list[str]]:
 # --------------------------------------------------------------------------------------
 
 def verify_cohort_design(features: list[dict]) -> list[tuple[bool, str]]:
+    """Assert the 4-week arc the demo narrative depends on, week by week."""
     checks: list[tuple[bool, str]] = []
+    WEEKEND = {"Saturday", "Sunday"}
 
-    def rows(person_id, weekdays=None):
-        return [f for f in features
-                if f["person_id"] == person_id
-                and (weekdays is None or f["day_of_week"] in weekdays)]
+    def rows(person_id, week=None, weekdays=None, workdays_only=False):
+        out = [f for f in features if f["person_id"] == person_id]
+        if week is not None:
+            out = [f for f in out if week_index(f["date"]) == week]
+        if weekdays is not None:
+            out = [f for f in out if f["day_of_week"] in weekdays]
+        if workdays_only:
+            out = [f for f in out if f["day_of_week"] not in WEEKEND]
+        return out
 
-    hs_days = rows("user_101", {"Tuesday", "Wednesday", "Thursday"})
-    checks.append((
-        len(hs_days) == 3 and all(5 <= f["total_meetings"] <= 7 for f in hs_days),
-        "user_101 has 5-7 meetings on Tue/Wed/Thu",
-    ))
-    checks.append((
-        all(f["no_lunch_buffer"] for f in hs_days),
-        "user_101 has no lunch buffer on Tue/Wed/Thu",
-    ))
-    checks.append((
-        all(f["back_to_back_count"] >= 2 for f in hs_days),
-        "user_101 has multiple back-to-back transitions on high-load days",
-    ))
-    checks.append((
-        sum(f["after_hours_count"] for f in rows("user_101")) >= 2,
-        "user_101 has >= 2 after-hours meetings in the window",
-    ))
+    def avg(vals):
+        return sum(vals) / len(vals) if vals else 0.0
 
+    # --- window shape -------------------------------------------------------------
+    checks.append((len(features) == len(COHORT) * 28,
+                   f"28 days x {len(COHORT)} people = {len(COHORT) * 28} person-day rollups "
+                   f"(got {len(features)})"))
+    weekend_rows = [f for f in features if f["day_of_week"] in WEEKEND]
+    checks.append((all(f["total_meetings"] == 0 for f in weekend_rows),
+                   f"zero scheduled work meetings on all {len(weekend_rows)} weekend person-days"))
+
+    # --- user_101: chronic burnout trajectory --------------------------------------
+    w1 = rows("user_101", week=0, workdays_only=True)
+    checks.append((all(3 <= f["total_meetings"] <= 4 for f in w1),
+                   "user_101 week 1 sits at a moderate 3-4 meetings/day"))
+
+    w2 = rows("user_101", week=1, workdays_only=True)
+    checks.append((all(4 <= f["total_meetings"] <= 5 for f in w2),
+                   "user_101 week 2 escalates to 4-5 meetings/day"))
+    checks.append((all(f["back_to_back_count"] >= 2 for f in w2),
+                   "user_101 week 2 runs 2+ back-to-back transitions every day"))
+
+    crunch = rows("user_101", week=2, weekdays={"Tuesday", "Wednesday", "Thursday"}) \
+        + rows("user_101", week=3, weekdays={"Tuesday", "Wednesday", "Thursday"})
+    checks.append((len(crunch) == 6 and all(5 <= f["total_meetings"] <= 7 for f in crunch),
+                   "user_101 weeks 3-4 hit 5-7 meetings on every Tue/Wed/Thu"))
+    checks.append((all(f["no_lunch_buffer"] for f in crunch),
+                   "user_101 weeks 3-4 lose the lunch window on every Tue/Wed/Thu"))
+    checks.append((all(f["back_to_back_count"] >= 4 for f in crunch),
+                   "user_101 weeks 3-4 run 4+ back-to-back transitions on every Tue/Wed/Thu"))
+    checks.append((sum(1 for f in crunch if f["back_to_back_count"] > 4) >= 4,
+                   "user_101 has >4 back-to-back days for Part 1's lag effect to key on"))
+    crunch_all = rows("user_101", week=2, workdays_only=True) + rows("user_101", week=3, workdays_only=True)
+    checks.append((sum(f["after_hours_count"] for f in crunch_all) >= 6,
+                   "user_101 weeks 3-4 carry repeated after-hours sessions "
+                   f"({sum(f['after_hours_count'] for f in crunch_all)} total)"))
+
+    escalation = [avg([f["total_meetings"] for f in rows("user_101", week=w, workdays_only=True)])
+                  for w in range(4)]
+    checks.append((escalation[0] < escalation[1] < escalation[2],
+                   "user_101 meeting load escalates monotonically across weeks 1->3 "
+                   f"({' -> '.join(f'{v:.1f}' for v in escalation)})"))
+
+    # --- user_102 / user_104: sustainably paced controls ---------------------------
     for pid in ("user_102", "user_104"):
-        bal = rows(pid)
+        bal = rows(pid, workdays_only=True)
         checks.append((all(2 <= f["total_meetings"] <= 3 for f in bal),
-                       f"{pid} holds 2-3 meetings per day"))
+                       f"{pid} holds 2-3 meetings per day for all 4 weeks"))
         checks.append((all(f["back_to_back_count"] == 0 for f in bal),
                        f"{pid} never runs back-to-back (every gap >= 15 min)"))
         checks.append((all(not f["no_lunch_buffer"] for f in bal),
-                       f"{pid} preserves a lunch block every day"))
+                       f"{pid} preserves a lunch block every working day"))
         checks.append((all(f["no_agenda_pct"] == 0.0 for f in bal),
                        f"{pid} has an explicit agenda on every meeting"))
+        checks.append((all(f["after_hours_count"] == 0 for f in rows(pid)),
+                       f"{pid} has zero after-hours meetings across the window"))
 
+    # --- user_103 / user_105 / user_106: baseline mixed dynamics --------------------
     for pid in ("user_103", "user_105", "user_106"):
-        base = [f for f in rows(pid) if f["day_of_week"] not in {"Saturday", "Sunday"}]
+        base = rows(pid, workdays_only=True)
         checks.append((all(3 <= f["total_meetings"] <= 4 for f in base),
-                       f"{pid} carries a typical 3-4 meeting/day load"))
+                       f"{pid} carries a typical 3-4 meeting/day load for all 4 weeks"))
 
     return checks
 
@@ -619,11 +717,13 @@ def main() -> int:
     print()
     print("ARTIFACTS WRITTEN")
     print(f"  [A] {CALENDAR_PATH.relative_to(PROJECT_ROOT)}  -> {len(events):>4} events")
+    working = sum(1 for f in features if f["total_meetings"] > 0)
     print(f"  [B] {FEATURES_PATH.relative_to(PROJECT_ROOT)}    -> {len(features):>4} person-day rollups "
-          f"(days with >= 1 meeting)")
+          f"({len(COHORT)} people x {len(date_range(START_DATE, END_DATE))} days; "
+          f"{working} working, {len(features) - working} meeting-free)")
     print(f"  [C] {SUMMARY_PATH.relative_to(PROJECT_ROOT)} -> {len(summary)} top-level keys")
     print()
-    print("TEAM STRUCTURAL METRICS (de-identified)")
+    print("TEAM STRUCTURAL METRICS (de-identified, denominator = working person-days)")
     for key, value in summary["metrics"].items():
         print(f"  {key:<42} {value}")
     print(f"  {'fragmentation_index':<42} {summary['structural_stress_profile']['fragmentation_index']}")

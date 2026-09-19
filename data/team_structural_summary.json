@@ -1,22 +1,22 @@
 {
   "summary_window": {
-    "start_date": "2026-09-13",
+    "start_date": "2026-08-23",
     "end_date": "2026-09-19",
-    "total_days_analyzed": 7
+    "total_days_analyzed": 28
   },
   "team_size": 6,
   "metrics": {
-    "avg_daily_meetings_per_person": 3.5,
-    "avg_daily_meeting_minutes_per_person": 176.2,
-    "pct_meetings_back_to_back": 39.6,
-    "pct_days_without_lunch_buffer": 31.2,
-    "pct_meetings_without_agenda": 30.6,
-    "pct_meetings_after_hours": 7.2
+    "avg_daily_meetings_per_person": 3.6,
+    "avg_daily_meeting_minutes_per_person": 180.4,
+    "pct_meetings_back_to_back": 40.6,
+    "pct_days_without_lunch_buffer": 30.8,
+    "pct_meetings_without_agenda": 31.2,
+    "pct_meetings_after_hours": 6.5
   },
   "structural_stress_profile": {
     "fragmentation_index": "High",
     "buffer_compliance_rating": "Critical",
-    "primary_calendar_bottleneck": "Meetings consuming the protected midday window (11:30 AM - 2:00 PM) on 31.2% of working days, leaving no contiguous 30-minute break"
+    "primary_calendar_bottleneck": "Meetings consuming the protected midday window (11:30 AM - 2:00 PM) on 30.8% of working days, leaving no contiguous 30-minute break"
   },
   "privacy_audit": {
     "contains_pii": false,
