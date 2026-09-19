@@ -8,6 +8,41 @@ calendars are used anywhere.
 See [`part3/README.md`](part3/README.md) for the correlation & insight engine
 and [`docs/superpowers/specs/`](docs/superpowers/specs/) for the design spec.
 
+## Building the site's data
+
+The website (`ui/`) reads exactly two files, and one script writes both:
+
+```bash
+python scripts/part5_site/build_site_data.py
+./serve.sh        # then open http://localhost:8080/ui/
+```
+
+That runs the real chain — Part 1/2's `data/` → Part 3's pipeline → Part 4's
+k-anonymity gate → `data/employee_insight.json` + `data/employer_view.json`.
+It is offline and deterministic by default, so it costs no API quota.
+
+Useful flags:
+
+| Flag | Effect |
+|---|---|
+| `--as-of 2026-09-17` | which day the employee view calls "today". Defaults to the last day of data, which is a **Saturday** — an honest but very quiet hero card. `2026-09-17` is the Thursday peak the demo script narrates. |
+| `--person user_104` | whose private view to build (default `user_101`, the trajectory case) |
+| `--skip-part3` | reuse `part3/data/out/` instead of re-running the engine |
+| `--llm` | use the OpenAI agents instead of deterministic narration |
+| `--fallback` | also run `node ui/build-fallback.mjs`, so the demo works over `file://` |
+
+`scripts/part5_site/test_site_contract.py` asserts the generated JSON carries
+every field `ui/app.js` actually dereferences. Nothing else in the repo fails
+when the site and the pipeline drift — the page just renders `undefined` —
+so run it after changing either side:
+
+```bash
+python -m pytest scripts/part5_site/test_site_contract.py
+```
+
+Nothing under `ui/` is written unless you pass `--fallback`. The site is
+another owner's deliverable; we connect to it.
+
 ## LLM provider configuration
 
 The project uses **OpenAI**. Copy `.env.example` to `.env` at the repo root and
