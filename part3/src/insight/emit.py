@@ -139,6 +139,12 @@ _SUBJECTS: dict[str, str] = {
     "has_lunch_buffer": "Days scheduled with {q} protected midday break",
     "focus_time_minutes": "Days leaving {q} minutes of uninterrupted focus time",
     "context_switches": "Days that switch between {q} different meeting topics",
+    # Present only in Part 2's day-aggregate format (see adapters.py). Without
+    # entries here the generic fallback splices the raw vocabulary description
+    # into the sentence and produces "Days where the longest unbroken run of
+    # meeting time, in minutes is 82.5+ are followed by...".
+    "avg_attendee_count": "Days whose meetings average {q} attendees",
+    "longest_meeting_stretch_min": "Days containing an unbroken meeting stretch of {q} minutes",
 }
 
 

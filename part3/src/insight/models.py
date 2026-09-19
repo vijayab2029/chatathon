@@ -35,6 +35,12 @@ FEATURE_VOCABULARY: dict[str, str] = {
     "has_lunch_buffer": "1 if a >=30 min gap exists between 11:00-14:00, else 0",
     "focus_time_minutes": "largest uninterrupted gap during work hours, in minutes",
     "context_switches": "number of distinct meeting topics/categories that day",
+    # Available from Part 2's day-aggregate format (see adapters.py). Event-level
+    # inputs leave these at 0.0, which is harmless: a constant feature produces no
+    # adaptive cut point and fails the validator's support floor, so it is simply
+    # never reported rather than reported as a null finding.
+    "avg_attendee_count": "mean attendees across that day's meetings",
+    "longest_meeting_stretch_min": "longest unbroken run of meeting time, in minutes",
 }
 
 OPERATORS = (">=", ">", "<=", "<", "==")
@@ -146,11 +152,17 @@ class ValidatedPattern:
     p_value: float
     passed: bool
     rejection_reason: str | None = None
+    # Upper bound of the stress scale these numbers live on. Our fixtures use
+    # 0-100, but Part 1's real generator emits roughly 1-43, and a 6-point lift
+    # means something very different on each. Bands are expressed as fractions
+    # of the scale so they stay meaningful either way.
+    scale_max: float = 100.0
 
     @property
     def severity(self) -> str:
-        """Coarse band derived from absolute lift in stress points."""
-        a = abs(self.lift)
+        """Coarse band derived from lift as a proportion of the stress scale."""
+        scale = self.scale_max if self.scale_max and self.scale_max > 0 else 100.0
+        a = abs(self.lift) * (100.0 / scale)
         if a < 3:
             return "minimal"
         if a < 7:
