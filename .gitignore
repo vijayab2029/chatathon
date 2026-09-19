@@ -15,11 +15,5 @@ part3/.env
 .claude/
 .llm_cache/
 
-# Spec / design docs (local only)
-docs/superpowers/
-**/specs/
-**/spec/
-**/.specify/
-
 # Generated output
 part3/data/out/*.json
