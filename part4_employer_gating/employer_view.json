@@ -1,0 +1,44 @@
+{
+  "gate_passed": true,
+  "team_size": 6,
+  "min_team_size": 5,
+  "categories": [
+    {
+      "category": "meeting_density",
+      "severity": "moderate"
+    },
+    {
+      "category": "no_agenda_rate",
+      "severity": "moderate"
+    },
+    {
+      "category": "after_hours_load",
+      "severity": "moderate"
+    },
+    {
+      "category": "back_to_back_density",
+      "severity": "moderate"
+    },
+    {
+      "category": "team_stress_level",
+      "severity": "high"
+    }
+  ],
+  "recommended_actions": [
+    "Review whether recurring meetings this week can be shortened or made async.",
+    "Encourage agenda-required norms for recurring meetings.",
+    "Check whether after-hours meetings are avoidable for most attendees.",
+    "Suggest adding buffer time between back-to-back blocks where possible.",
+    "Run a workload rebalancing check-in this week \u2014 do not target individuals; discuss as a team norm."
+  ],
+  "opted_in_specifics": [
+    {
+      "person_id": "p1",
+      "insight": "Your stress tends to spike on days with 5+ meetings and a late-evening call, especially with no lunch buffer."
+    },
+    {
+      "person_id": "p5",
+      "insight": "Your stress spikes strongly on days with 6+ meetings and back-to-back blocks before lunch."
+    }
+  ]
+}

@@ -1,0 +1,33 @@
+# --- Python ---
+__pycache__/
+*.pyc
+.mypy_cache/
+.pytest_cache/
+venv/
+.venv/
+
+# --- Node / Next.js (if used for dashboards) ---
+node_modules/
+.next/
+dist/
+build/
+
+# --- Environment / secrets ---
+.env
+.env.local
+.env.*.local
+
+# --- Editor / OS ---
+.DS_Store
+.vscode/
+.idea/
+
+# --- Supabase local dev ---
+supabase/.branches
+supabase/.temp
+
+# --- AI tooling / local-only artifacts ---
+.claude/
+specs/
+.cursor/
+.windsurf/

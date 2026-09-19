@@ -1,0 +1,10 @@
+{
+  "employees": [
+    {"person_id": "p1", "opted_in": true},
+    {"person_id": "p2", "opted_in": false},
+    {"person_id": "p3", "opted_in": false},
+    {"person_id": "p4", "opted_in": false},
+    {"person_id": "p5", "opted_in": true},
+    {"person_id": "p6", "opted_in": false}
+  ]
+}
