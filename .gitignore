@@ -1,21 +1,41 @@
-# Python
+# --- Python ---
 __pycache__/
 *.py[cod]
 *.pyc
-.venv
-.venv/
-venv/
+.mypy_cache/
 .pytest_cache/
+venv/
+.venv/
 
-# Secrets / local env
+# --- Node / Next.js (if used for dashboards) ---
+node_modules/
+.next/
+dist/
+build/
+
+# --- Environment / secrets ---
 .env
 .env.*
 !.env.example
 part3/.env
+.env.local
+.env.*.local
 
-# Agent tooling
+# --- Editor / OS ---
+.DS_Store
+.vscode/
+.idea/
+
+# --- Supabase local dev ---
+supabase/.branches
+supabase/.temp
+
+# --- AI tooling / local-only artifacts ---
 .claude/
 .llm_cache/
+specs/
+.cursor/
+.windsurf/
 
-# Generated output
+# --- Generated output ---
 part3/data/out/*.json

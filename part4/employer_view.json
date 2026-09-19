@@ -1,0 +1,36 @@
+{
+  "gate_passed": true,
+  "team_size": 6,
+  "min_team_size": 5,
+  "categories": [
+    {
+      "category": "meeting_density",
+      "severity": "moderate"
+    },
+    {
+      "category": "back_to_back_density",
+      "severity": "moderate"
+    },
+    {
+      "category": "no_agenda_rate",
+      "severity": "moderate"
+    },
+    {
+      "category": "after_hours_load",
+      "severity": "moderate"
+    },
+    {
+      "category": "lunch_buffer_risk",
+      "severity": "moderate"
+    }
+  ],
+  "recommended_actions": [
+    "Review whether recurring meetings this week can be shortened or made async.",
+    "Suggest adding buffer time between back-to-back blocks where possible.",
+    "Encourage agenda-required norms for recurring meetings.",
+    "Check whether after-hours meetings are avoidable for most attendees.",
+    "Consider protecting a midday buffer window on the team calendar."
+  ],
+  "validated_patterns": [],
+  "gating_applied": true
+}
