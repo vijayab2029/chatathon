@@ -1,43 +1,169 @@
-person_id,date,stress_score,contributing_factors
-user_101,2026-09-13,2,no significant stress drivers
-user_101,2026-09-14,1,no significant stress drivers
-user_101,2026-09-15,11,low recovery (87%); reduced HRV (-13% vs personal baseline)
-user_101,2026-09-16,43,low recovery (56%); reduced HRV (-51% vs personal baseline); elevated resting heart rate (+40% vs personal baseline)
-user_101,2026-09-17,43,low recovery (54%); reduced HRV (-51% vs personal baseline); elevated resting heart rate (+42% vs personal baseline)
-user_101,2026-09-18,38,low recovery (59%); reduced HRV (-46% vs personal baseline); elevated resting heart rate (+42% vs personal baseline)
-user_101,2026-09-19,37,low recovery (61%); reduced HRV (-47% vs personal baseline); elevated resting heart rate (+35% vs personal baseline)
-user_102,2026-09-13,2,no significant stress drivers
-user_102,2026-09-14,2,no significant stress drivers
-user_102,2026-09-15,6,no significant stress drivers
-user_102,2026-09-16,5,no significant stress drivers
-user_102,2026-09-17,8,low recovery (91%)
-user_102,2026-09-18,5,no significant stress drivers
-user_102,2026-09-19,4,no significant stress drivers
-user_103,2026-09-13,1,no significant stress drivers
-user_103,2026-09-14,1,no significant stress drivers
-user_103,2026-09-15,20,low recovery (77%); reduced HRV (-30% vs personal baseline); elevated resting heart rate (+18% vs personal baseline)
-user_103,2026-09-16,20,low recovery (79%); reduced HRV (-23% vs personal baseline); elevated resting heart rate (+24% vs personal baseline)
-user_103,2026-09-17,10,low recovery (88%)
-user_103,2026-09-18,21,low recovery (76%); reduced HRV (-23% vs personal baseline); elevated resting heart rate (+29% vs personal baseline)
-user_103,2026-09-19,9,low recovery (88%)
-user_104,2026-09-13,2,no significant stress drivers
-user_104,2026-09-14,3,no significant stress drivers
-user_104,2026-09-15,3,no significant stress drivers
-user_104,2026-09-16,8,low recovery (90%)
-user_104,2026-09-17,7,low recovery (91%)
-user_104,2026-09-18,6,no significant stress drivers
-user_104,2026-09-19,4,no significant stress drivers
-user_105,2026-09-13,1,no significant stress drivers
-user_105,2026-09-14,1,no significant stress drivers
-user_105,2026-09-15,27,low recovery (72%); reduced HRV (-31% vs personal baseline); elevated resting heart rate (+31% vs personal baseline)
-user_105,2026-09-16,8,low recovery (89%)
-user_105,2026-09-17,27,low recovery (71%); reduced HRV (-37% vs personal baseline); elevated resting heart rate (+28% vs personal baseline)
-user_105,2026-09-18,17,low recovery (82%); reduced HRV (-19% vs personal baseline); elevated resting heart rate (+21% vs personal baseline)
-user_105,2026-09-19,19,low recovery (78%); reduced HRV (-29% vs personal baseline); elevated resting heart rate (+17% vs personal baseline)
-user_106,2026-09-13,4,no significant stress drivers
-user_106,2026-09-14,2,no significant stress drivers
-user_106,2026-09-15,11,low recovery (87%)
-user_106,2026-09-16,28,low recovery (71%); reduced HRV (-37% vs personal baseline); elevated resting heart rate (+28% vs personal baseline)
-user_106,2026-09-17,13,low recovery (85%); reduced HRV (-15% vs personal baseline); elevated resting heart rate (+16% vs personal baseline)
-user_106,2026-09-18,11,low recovery (87%); elevated resting heart rate (+16% vs personal baseline); reduced HRV (-12% vs personal baseline)
-user_106,2026-09-19,28,low recovery (67%); reduced HRV (-37% vs personal baseline); elevated resting heart rate (+36% vs personal baseline)
+person_id,date,hrv_ms,rhr_bpm,sleep_hours,recovery_pct,day_strain,stress_score,contributing_factors
+user_101,2026-08-23,69.2,56,7.82,89,9.5,22,"elevated day strain (9.5 of 21); low recovery (89%, HRV +2% / RHR -0% vs personal baseline)"
+user_101,2026-08-24,67.9,56,8.13,88,11.3,25,"elevated day strain (11.3 of 21); low recovery (88%, HRV +0% / RHR -0% vs personal baseline)"
+user_101,2026-08-25,58.5,62,7.45,76,12.6,35,"elevated day strain (12.6 of 21); low recovery (76%, HRV -14% / RHR +10% vs personal baseline)"
+user_101,2026-08-26,45.8,66,6.01,61,10.5,41,"low recovery (61%, HRV -32% / RHR +17% vs personal baseline); elevated day strain (10.5 of 21)"
+user_101,2026-08-27,59.8,59,6.96,77,12.7,35,"elevated day strain (12.7 of 21); low recovery (77%, HRV -12% / RHR +5% vs personal baseline)"
+user_101,2026-08-28,46.6,68,6.93,60,10.4,41,"low recovery (60%, HRV -31% / RHR +21% vs personal baseline); elevated day strain (10.4 of 21)"
+user_101,2026-08-29,55.7,61,7.29,75,10.4,32,"elevated day strain (10.4 of 21); low recovery (75%, HRV -18% / RHR +8% vs personal baseline)"
+user_101,2026-08-30,61.4,57,7.96,84,9.2,24,"elevated day strain (9.2 of 21); low recovery (84%, HRV -9% / RHR +1% vs personal baseline)"
+user_101,2026-08-31,66.3,58,7.41,85,10.3,26,"elevated day strain (10.3 of 21); low recovery (85%, HRV -2% / RHR +3% vs personal baseline)"
+user_101,2026-09-01,52.4,64,7.04,69,13.5,41,"elevated day strain (13.5 of 21); low recovery (69%, HRV -23% / RHR +14% vs personal baseline)"
+user_101,2026-09-02,53.6,63,6.97,70,14.3,42,"elevated day strain (14.3 of 21); low recovery (70%, HRV -21% / RHR +12% vs personal baseline)"
+user_101,2026-09-03,39.6,71,6.19,51,11.1,48,"low recovery (51%, HRV -42% / RHR +26% vs personal baseline); elevated day strain (11.1 of 21)"
+user_101,2026-09-04,48.9,66,6.56,63,11.3,41,"low recovery (63%, HRV -28% / RHR +17% vs personal baseline); elevated day strain (11.3 of 21)"
+user_101,2026-09-05,54.7,65,7.2,68,8.8,33,"low recovery (68%, HRV -19% / RHR +16% vs personal baseline); elevated day strain (8.8 of 21)"
+user_101,2026-09-06,64.6,59,8.19,83,8.6,24,"elevated day strain (8.6 of 21); low recovery (83%, HRV -5% / RHR +5% vs personal baseline)"
+user_101,2026-09-07,60.8,58,7.66,83,14.5,34,"elevated day strain (14.5 of 21); low recovery (83%, HRV -10% / RHR +3% vs personal baseline)"
+user_101,2026-09-08,36.7,70,5.92,49,15.3,56,"low recovery (49%, HRV -46% / RHR +24% vs personal baseline); elevated day strain (15.3 of 21)"
+user_101,2026-09-09,39.5,71,4.58,48,15.6,59,"low recovery (48%, HRV -42% / RHR +26% vs personal baseline); elevated day strain (15.6 of 21)"
+user_101,2026-09-10,33.7,72,4.61,42,15.7,62,"low recovery (42%, HRV -50% / RHR +28% vs personal baseline); elevated day strain (15.7 of 21)"
+user_101,2026-09-11,37.9,74,5.6,43,15.0,59,"low recovery (43%, HRV -44% / RHR +32% vs personal baseline); elevated day strain (15.0 of 21)"
+user_101,2026-09-12,38.9,71,5.65,49,9.1,46,"low recovery (49%, HRV -43% / RHR +26% vs personal baseline); elevated day strain (9.1 of 21)"
+user_101,2026-09-13,57.5,61,7.16,76,10.1,31,"elevated day strain (10.1 of 21); low recovery (76%, HRV -15% / RHR +8% vs personal baseline)"
+user_101,2026-09-14,56.0,62,7.08,74,14.6,40,"elevated day strain (14.6 of 21); low recovery (74%, HRV -17% / RHR +10% vs personal baseline)"
+user_101,2026-09-15,41.3,71,5.3,50,15.7,57,"low recovery (50%, HRV -39% / RHR +26% vs personal baseline); elevated day strain (15.7 of 21)"
+user_101,2026-09-16,31.7,75,5.31,40,16.3,64,"low recovery (40%, HRV -53% / RHR +33% vs personal baseline); elevated day strain (16.3 of 21)"
+user_101,2026-09-17,31.9,77,4.5,35,16.9,68,"low recovery (35%, HRV -53% / RHR +37% vs personal baseline); elevated day strain (16.9 of 21)"
+user_101,2026-09-18,32.1,75,4.78,38,14.0,61,"low recovery (38%, HRV -53% / RHR +33% vs personal baseline); elevated day strain (14.0 of 21)"
+user_101,2026-09-19,39.3,70,5.84,51,8.9,44,"low recovery (51%, HRV -42% / RHR +24% vs personal baseline); elevated day strain (8.9 of 21)"
+user_102,2026-08-23,60.1,56,8.11,91,8.9,20,elevated day strain (8.9 of 21)
+user_102,2026-08-24,61.6,58,8.1,91,9.7,21,elevated day strain (9.7 of 21)
+user_102,2026-08-25,56.8,63,7.29,81,9.3,27,"elevated day strain (9.3 of 21); low recovery (81%, HRV -6% / RHR +8% vs personal baseline)"
+user_102,2026-08-26,60.6,61,8.3,85,9.0,23,"elevated day strain (9.0 of 21); low recovery (85%, HRV +0% / RHR +5% vs personal baseline)"
+user_102,2026-08-27,54.8,61,7.66,82,10.7,28,"elevated day strain (10.7 of 21); low recovery (82%, HRV -9% / RHR +5% vs personal baseline)"
+user_102,2026-08-28,56.9,62,7.55,82,8.7,25,"elevated day strain (8.7 of 21); low recovery (82%, HRV -6% / RHR +6% vs personal baseline)"
+user_102,2026-08-29,53.0,60,7.85,82,8.3,24,"elevated day strain (8.3 of 21); low recovery (82%, HRV -12% / RHR +3% vs personal baseline)"
+user_102,2026-08-30,55.8,58,8.24,86,8.5,22,"elevated day strain (8.5 of 21); low recovery (86%, HRV -8% / RHR -0% vs personal baseline)"
+user_102,2026-08-31,62.4,61,8.07,86,8.7,22,"elevated day strain (8.7 of 21); low recovery (86%, HRV +3% / RHR +5% vs personal baseline)"
+user_102,2026-09-01,56.6,61,7.89,82,8.8,25,"elevated day strain (8.8 of 21); low recovery (82%, HRV -6% / RHR +5% vs personal baseline)"
+user_102,2026-09-02,53.9,61,7.16,80,10.3,29,"elevated day strain (10.3 of 21); low recovery (80%, HRV -11% / RHR +5% vs personal baseline)"
+user_102,2026-09-03,57.7,61,7.71,83,10.6,27,"elevated day strain (10.6 of 21); low recovery (83%, HRV -5% / RHR +5% vs personal baseline)"
+user_102,2026-09-04,58.6,61,8.57,84,9.6,25,"elevated day strain (9.6 of 21); low recovery (84%, HRV -3% / RHR +5% vs personal baseline)"
+user_102,2026-09-05,56.0,63,8.12,79,8.8,26,"elevated day strain (8.8 of 21); low recovery (79%, HRV -7% / RHR +8% vs personal baseline)"
+user_102,2026-09-06,61.0,57,7.37,89,8.4,21,"elevated day strain (8.4 of 21); low recovery (89%, HRV +1% / RHR -2% vs personal baseline)"
+user_102,2026-09-07,60.1,58,7.63,88,9.7,23,"elevated day strain (9.7 of 21); low recovery (88%, HRV -1% / RHR -0% vs personal baseline)"
+user_102,2026-09-08,58.6,62,7.69,84,8.6,24,"elevated day strain (8.6 of 21); low recovery (84%, HRV -3% / RHR +6% vs personal baseline)"
+user_102,2026-09-09,56.4,59,7.27,85,9.1,24,"elevated day strain (9.1 of 21); low recovery (85%, HRV -7% / RHR +1% vs personal baseline)"
+user_102,2026-09-10,54.9,61,8.17,81,8.9,25,"elevated day strain (8.9 of 21); low recovery (81%, HRV -9% / RHR +5% vs personal baseline)"
+user_102,2026-09-11,56.3,59,7.71,85,10.2,26,"elevated day strain (10.2 of 21); low recovery (85%, HRV -7% / RHR +1% vs personal baseline)"
+user_102,2026-09-12,58.7,60,7.91,85,8.8,23,"elevated day strain (8.8 of 21); low recovery (85%, HRV -3% / RHR +3% vs personal baseline)"
+user_102,2026-09-13,57.6,61,8.07,82,8.2,24,"elevated day strain (8.2 of 21); low recovery (82%, HRV -5% / RHR +5% vs personal baseline)"
+user_102,2026-09-14,59.3,59,8.03,86,9.7,24,"elevated day strain (9.7 of 21); low recovery (86%, HRV -2% / RHR +1% vs personal baseline)"
+user_102,2026-09-15,60.4,62,8.26,83,7.9,23,"elevated day strain (7.9 of 21); low recovery (83%, HRV -0% / RHR +6% vs personal baseline)"
+user_102,2026-09-16,60.0,61,7.46,86,7.9,22,"elevated day strain (7.9 of 21); low recovery (86%, HRV -1% / RHR +5% vs personal baseline)"
+user_102,2026-09-17,57.1,60,7.77,84,8.3,23,"elevated day strain (8.3 of 21); low recovery (84%, HRV -6% / RHR +3% vs personal baseline)"
+user_102,2026-09-18,57.2,63,7.53,81,8.8,26,"elevated day strain (8.8 of 21); low recovery (81%, HRV -5% / RHR +8% vs personal baseline)"
+user_102,2026-09-19,57.9,61,7.51,84,8.4,23,"elevated day strain (8.4 of 21); low recovery (84%, HRV -4% / RHR +5% vs personal baseline)"
+user_103,2026-08-23,68.3,62,8.31,89,8.4,20,"elevated day strain (8.4 of 21); low recovery (89%, HRV -2% / RHR -1% vs personal baseline)"
+user_103,2026-08-24,71.1,63,8.19,90,12.0,26,"elevated day strain (12.0 of 21); low recovery (90%, HRV +2% / RHR +0% vs personal baseline)"
+user_103,2026-08-25,55.1,70,6.96,71,13.3,39,"elevated day strain (13.3 of 21); low recovery (71%, HRV -21% / RHR +12% vs personal baseline)"
+user_103,2026-08-26,49.3,76,7.43,61,9.9,39,"low recovery (61%, HRV -29% / RHR +21% vs personal baseline); elevated day strain (9.9 of 21)"
+user_103,2026-08-27,58.3,67,6.59,75,12.0,36,"elevated day strain (12.0 of 21); low recovery (75%, HRV -16% / RHR +7% vs personal baseline)"
+user_103,2026-08-28,47.2,76,6.8,59,10.8,42,"low recovery (59%, HRV -32% / RHR +21% vs personal baseline); elevated day strain (10.8 of 21)"
+user_103,2026-08-29,57.3,69,7.59,74,8.1,28,"low recovery (74%, HRV -18% / RHR +10% vs personal baseline); elevated day strain (8.1 of 21)"
+user_103,2026-08-30,67.6,64,7.67,86,8.5,22,"elevated day strain (8.5 of 21); low recovery (86%, HRV -3% / RHR +2% vs personal baseline)"
+user_103,2026-08-31,62.4,66,7.61,80,12.8,33,"elevated day strain (12.8 of 21); low recovery (80%, HRV -11% / RHR +5% vs personal baseline)"
+user_103,2026-09-01,45.0,74,6.92,60,9.9,40,"low recovery (60%, HRV -35% / RHR +18% vs personal baseline); elevated day strain (9.9 of 21)"
+user_103,2026-09-02,61.1,66,7.05,77,11.8,34,"elevated day strain (11.8 of 21); low recovery (77%, HRV -12% / RHR +5% vs personal baseline)"
+user_103,2026-09-03,51.3,73,6.97,66,10.6,38,"low recovery (66%, HRV -26% / RHR +16% vs personal baseline); elevated day strain (10.6 of 21)"
+user_103,2026-09-04,54.6,70,7.44,71,10.9,35,"elevated day strain (10.9 of 21); low recovery (71%, HRV -22% / RHR +12% vs personal baseline)"
+user_103,2026-09-05,56.4,70,7.28,71,9.0,32,"low recovery (71%, HRV -19% / RHR +12% vs personal baseline); elevated day strain (9.0 of 21)"
+user_103,2026-09-06,67.8,68,7.7,82,10.1,27,"elevated day strain (10.1 of 21); low recovery (82%, HRV -3% / RHR +8% vs personal baseline)"
+user_103,2026-09-07,61.5,66,7.42,79,8.3,26,"elevated day strain (8.3 of 21); low recovery (79%, HRV -12% / RHR +5% vs personal baseline)"
+user_103,2026-09-08,65.5,65,6.85,81,12.0,32,"elevated day strain (12.0 of 21); low recovery (81%, HRV -6% / RHR +4% vs personal baseline)"
+user_103,2026-09-09,52.1,73,6.65,66,11.9,40,"elevated day strain (11.9 of 21); low recovery (66%, HRV -25% / RHR +16% vs personal baseline)"
+user_103,2026-09-10,57.6,68,7.17,74,10.9,34,"elevated day strain (10.9 of 21); low recovery (74%, HRV -17% / RHR +8% vs personal baseline)"
+user_103,2026-09-11,57.9,70,7.23,73,14.1,39,"elevated day strain (14.1 of 21); low recovery (73%, HRV -17% / RHR +12% vs personal baseline)"
+user_103,2026-09-12,48.8,74,6.58,63,8.8,37,"low recovery (63%, HRV -30% / RHR +18% vs personal baseline); elevated day strain (8.8 of 21)"
+user_103,2026-09-13,61.0,66,7.44,79,7.4,25,"elevated day strain (7.4 of 21); low recovery (79%, HRV -13% / RHR +5% vs personal baseline)"
+user_103,2026-09-14,65.0,65,7.52,83,11.3,29,"elevated day strain (11.3 of 21); low recovery (83%, HRV -7% / RHR +4% vs personal baseline)"
+user_103,2026-09-15,44.7,76,6.46,58,11.4,44,"low recovery (58%, HRV -36% / RHR +21% vs personal baseline); elevated day strain (11.4 of 21)"
+user_103,2026-09-16,55.8,70,7.07,72,10.9,35,"elevated day strain (10.9 of 21); low recovery (72%, HRV -20% / RHR +12% vs personal baseline)"
+user_103,2026-09-17,56.0,70,7.27,72,13.2,38,"elevated day strain (13.2 of 21); low recovery (72%, HRV -20% / RHR +12% vs personal baseline)"
+user_103,2026-09-18,52.2,74,7.03,64,10.4,38,"low recovery (64%, HRV -25% / RHR +18% vs personal baseline); elevated day strain (10.4 of 21)"
+user_103,2026-09-19,59.2,70,6.69,72,7.0,29,"low recovery (72%, HRV -15% / RHR +12% vs personal baseline); elevated day strain (7.0 of 21)"
+user_104,2026-08-23,72.8,57,8.31,88,8.5,21,"elevated day strain (8.5 of 21); low recovery (88%, HRV -0% / RHR +0% vs personal baseline)"
+user_104,2026-08-24,70.6,55,7.76,89,8.9,21,"elevated day strain (8.9 of 21); low recovery (89%, HRV -3% / RHR -3% vs personal baseline)"
+user_104,2026-08-25,71.1,58,8.1,86,9.2,23,"elevated day strain (9.2 of 21); low recovery (86%, HRV -2% / RHR +2% vs personal baseline)"
+user_104,2026-08-26,67.0,57,7.92,85,9.0,23,"elevated day strain (9.0 of 21); low recovery (85%, HRV -8% / RHR +0% vs personal baseline)"
+user_104,2026-08-27,70.4,56,7.79,88,10.5,24,"elevated day strain (10.5 of 21); low recovery (88%, HRV -3% / RHR -2% vs personal baseline)"
+user_104,2026-08-28,70.0,59,7.71,84,8.4,23,"elevated day strain (8.4 of 21); low recovery (84%, HRV -4% / RHR +4% vs personal baseline)"
+user_104,2026-08-29,70.8,61,7.93,82,10.1,27,"elevated day strain (10.1 of 21); low recovery (82%, HRV -3% / RHR +7% vs personal baseline)"
+user_104,2026-08-30,71.8,56,7.72,89,8.5,21,"elevated day strain (8.5 of 21); low recovery (89%, HRV -1% / RHR -2% vs personal baseline)"
+user_104,2026-08-31,73.8,56,8.43,91,8.3,19,elevated day strain (8.3 of 21)
+user_104,2026-09-01,67.3,58,7.67,83,10.8,28,"elevated day strain (10.8 of 21); low recovery (83%, HRV -8% / RHR +2% vs personal baseline)"
+user_104,2026-09-02,65.4,59,7.36,82,11.0,29,"elevated day strain (11.0 of 21); low recovery (82%, HRV -10% / RHR +4% vs personal baseline)"
+user_104,2026-09-03,68.3,59,7.87,83,9.6,26,"elevated day strain (9.6 of 21); low recovery (83%, HRV -6% / RHR +4% vs personal baseline)"
+user_104,2026-09-04,67.5,59,7.83,82,10.5,28,"elevated day strain (10.5 of 21); low recovery (82%, HRV -7% / RHR +4% vs personal baseline)"
+user_104,2026-09-05,66.7,61,7.74,80,8.6,26,"elevated day strain (8.6 of 21); low recovery (80%, HRV -8% / RHR +7% vs personal baseline)"
+user_104,2026-09-06,74.4,58,7.51,88,7.4,20,"elevated day strain (7.4 of 21); low recovery (88%, HRV +2% / RHR +2% vs personal baseline)"
+user_104,2026-09-07,67.5,58,8.08,85,8.8,23,"elevated day strain (8.8 of 21); low recovery (85%, HRV -7% / RHR +2% vs personal baseline)"
+user_104,2026-09-08,65.8,59,7.48,82,8.7,25,"elevated day strain (8.7 of 21); low recovery (82%, HRV -10% / RHR +4% vs personal baseline)"
+user_104,2026-09-09,67.5,58,7.74,84,9.8,25,"elevated day strain (9.8 of 21); low recovery (84%, HRV -7% / RHR +2% vs personal baseline)"
+user_104,2026-09-10,64.3,59,7.81,82,9.2,25,"elevated day strain (9.2 of 21); low recovery (82%, HRV -12% / RHR +4% vs personal baseline)"
+user_104,2026-09-11,71.9,58,7.79,86,9.9,24,"elevated day strain (9.9 of 21); low recovery (86%, HRV -1% / RHR +2% vs personal baseline)"
+user_104,2026-09-12,68.1,59,7.55,83,8.3,24,"elevated day strain (8.3 of 21); low recovery (83%, HRV -7% / RHR +4% vs personal baseline)"
+user_104,2026-09-13,71.1,57,8.13,87,7.8,20,"elevated day strain (7.8 of 21); low recovery (87%, HRV -2% / RHR +0% vs personal baseline)"
+user_104,2026-09-14,69.1,58,7.97,86,9.1,23,"elevated day strain (9.1 of 21); low recovery (86%, HRV -5% / RHR +2% vs personal baseline)"
+user_104,2026-09-15,69.0,58,8.06,85,9.6,24,"elevated day strain (9.6 of 21); low recovery (85%, HRV -5% / RHR +2% vs personal baseline)"
+user_104,2026-09-16,66.3,59,7.87,82,8.0,23,"elevated day strain (8.0 of 21); low recovery (82%, HRV -9% / RHR +4% vs personal baseline)"
+user_104,2026-09-17,69.6,58,7.54,86,10.0,25,"elevated day strain (10.0 of 21); low recovery (86%, HRV -4% / RHR +2% vs personal baseline)"
+user_104,2026-09-18,69.9,59,7.49,84,7.5,22,"elevated day strain (7.5 of 21); low recovery (84%, HRV -4% / RHR +4% vs personal baseline)"
+user_104,2026-09-19,68.4,60,7.66,82,8.8,25,"elevated day strain (8.8 of 21); low recovery (82%, HRV -6% / RHR +6% vs personal baseline)"
+user_105,2026-08-23,65.8,56,7.83,90,9.7,22,"elevated day strain (9.7 of 21); low recovery (90%, HRV +4% / RHR -1% vs personal baseline)"
+user_105,2026-08-24,62.7,55,7.78,89,11.8,26,"elevated day strain (11.8 of 21); low recovery (89%, HRV -1% / RHR -2% vs personal baseline)"
+user_105,2026-08-25,41.5,64,6.54,63,8.8,37,"low recovery (63%, HRV -35% / RHR +14% vs personal baseline); elevated day strain (8.8 of 21)"
+user_105,2026-08-26,54.0,61,6.78,74,11.3,35,"elevated day strain (11.3 of 21); low recovery (74%, HRV -15% / RHR +8% vs personal baseline)"
+user_105,2026-08-27,45.4,66,6.77,62,10.5,40,"low recovery (62%, HRV -28% / RHR +17% vs personal baseline); elevated day strain (10.5 of 21)"
+user_105,2026-08-28,49.8,63,7.49,71,11.1,35,"elevated day strain (11.1 of 21); low recovery (71%, HRV -21% / RHR +12% vs personal baseline)"
+user_105,2026-08-29,56.3,64,7.45,73,7.5,28,"low recovery (73%, HRV -11% / RHR +14% vs personal baseline); elevated day strain (7.5 of 21)"
+user_105,2026-08-30,58.4,58,8.18,84,8.7,23,"elevated day strain (8.7 of 21); low recovery (84%, HRV -8% / RHR +3% vs personal baseline)"
+user_105,2026-08-31,60.4,58,7.47,84,9.8,26,"elevated day strain (9.8 of 21); low recovery (84%, HRV -5% / RHR +3% vs personal baseline)"
+user_105,2026-09-01,54.7,61,6.57,74,13.7,39,"elevated day strain (13.7 of 21); low recovery (74%, HRV -14% / RHR +8% vs personal baseline)"
+user_105,2026-09-02,44.5,69,7.03,60,11.0,42,"low recovery (60%, HRV -30% / RHR +23% vs personal baseline); elevated day strain (11.0 of 21)"
+user_105,2026-09-03,49.6,65,7.07,68,11.1,37,"elevated day strain (11.1 of 21); low recovery (68%, HRV -22% / RHR +15% vs personal baseline)"
+user_105,2026-09-04,48.6,63,7.32,71,11.2,35,"elevated day strain (11.2 of 21); low recovery (71%, HRV -23% / RHR +12% vs personal baseline)"
+user_105,2026-09-05,46.7,65,6.42,66,9.0,36,"low recovery (66%, HRV -26% / RHR +15% vs personal baseline); elevated day strain (9.0 of 21)"
+user_105,2026-09-06,63.5,61,7.63,83,9.3,25,"elevated day strain (9.3 of 21); low recovery (83%, HRV +0% / RHR +8% vs personal baseline)"
+user_105,2026-09-07,58.3,58,8.32,83,13.0,31,"elevated day strain (13.0 of 21); low recovery (83%, HRV -8% / RHR +3% vs personal baseline)"
+user_105,2026-09-08,45.0,66,6.72,63,11.5,41,"low recovery (63%, HRV -29% / RHR +17% vs personal baseline); elevated day strain (11.5 of 21)"
+user_105,2026-09-09,55.7,61,7.21,77,10.2,31,"elevated day strain (10.2 of 21); low recovery (77%, HRV -12% / RHR +8% vs personal baseline)"
+user_105,2026-09-10,55.4,61,7.25,78,13.6,36,"elevated day strain (13.6 of 21); low recovery (78%, HRV -13% / RHR +8% vs personal baseline)"
+user_105,2026-09-11,41.0,66,6.83,61,7.9,36,"low recovery (61%, HRV -35% / RHR +17% vs personal baseline); elevated day strain (7.9 of 21)"
+user_105,2026-09-12,55.4,60,6.64,77,8.2,28,"elevated day strain (8.2 of 21); low recovery (77%, HRV -13% / RHR +7% vs personal baseline)"
+user_105,2026-09-13,57.7,59,7.94,83,8.2,23,"elevated day strain (8.2 of 21); low recovery (83%, HRV -9% / RHR +5% vs personal baseline)"
+user_105,2026-09-14,59.7,58,7.78,83,9.7,26,"elevated day strain (9.7 of 21); low recovery (83%, HRV -6% / RHR +3% vs personal baseline)"
+user_105,2026-09-15,51.9,59,7.72,77,11.4,32,"elevated day strain (11.4 of 21); low recovery (77%, HRV -18% / RHR +5% vs personal baseline)"
+user_105,2026-09-16,47.3,62,7.43,70,12.5,38,"elevated day strain (12.5 of 21); low recovery (70%, HRV -25% / RHR +10% vs personal baseline)"
+user_105,2026-09-17,45.4,65,6.83,65,10.6,38,"low recovery (65%, HRV -28% / RHR +15% vs personal baseline); elevated day strain (10.6 of 21)"
+user_105,2026-09-18,52.6,63,6.44,71,11.3,37,"elevated day strain (11.3 of 21); low recovery (71%, HRV -17% / RHR +12% vs personal baseline)"
+user_105,2026-09-19,44.1,67,6.81,61,8.3,37,"low recovery (61%, HRV -30% / RHR +19% vs personal baseline); elevated day strain (8.3 of 21)"
+user_106,2026-08-23,62.2,62,8.76,89,7.6,19,"elevated day strain (7.6 of 21); low recovery (89%, HRV +5% / RHR +2% vs personal baseline)"
+user_106,2026-08-24,61.9,62,8.19,89,7.8,19,"elevated day strain (7.8 of 21); low recovery (89%, HRV +4% / RHR +2% vs personal baseline)"
+user_106,2026-08-25,59.5,64,6.96,84,13.1,32,"elevated day strain (13.1 of 21); low recovery (84%, HRV +0% / RHR +5% vs personal baseline)"
+user_106,2026-08-26,40.9,70,7.07,65,9.6,36,"low recovery (65%, HRV -31% / RHR +15% vs personal baseline); elevated day strain (9.6 of 21)"
+user_106,2026-08-27,50.6,69,7.58,73,11.5,35,"elevated day strain (11.5 of 21); low recovery (73%, HRV -15% / RHR +13% vs personal baseline)"
+user_106,2026-08-28,52.4,68,7.59,75,13.3,36,"elevated day strain (13.3 of 21); low recovery (75%, HRV -12% / RHR +11% vs personal baseline)"
+user_106,2026-08-29,40.7,73,6.71,61,10.0,40,"low recovery (61%, HRV -31% / RHR +20% vs personal baseline); elevated day strain (10.0 of 21)"
+user_106,2026-08-30,56.4,64,7.61,83,8.0,23,"elevated day strain (8.0 of 21); low recovery (83%, HRV -5% / RHR +5% vs personal baseline)"
+user_106,2026-08-31,57.6,63,8.15,85,14.2,32,"elevated day strain (14.2 of 21); low recovery (85%, HRV -3% / RHR +3% vs personal baseline)"
+user_106,2026-09-01,38.6,71,7.06,61,11.2,41,"low recovery (61%, HRV -35% / RHR +16% vs personal baseline); elevated day strain (11.2 of 21)"
+user_106,2026-09-02,45.7,71,6.99,67,10.4,37,"low recovery (67%, HRV -23% / RHR +16% vs personal baseline); elevated day strain (10.4 of 21)"
+user_106,2026-09-03,44.8,67,6.9,70,11.4,37,"elevated day strain (11.4 of 21); low recovery (70%, HRV -25% / RHR +10% vs personal baseline)"
+user_106,2026-09-04,40.4,71,6.53,63,9.9,39,"low recovery (63%, HRV -32% / RHR +16% vs personal baseline); elevated day strain (9.9 of 21)"
+user_106,2026-09-05,48.7,69,6.71,70,8.0,31,"low recovery (70%, HRV -18% / RHR +13% vs personal baseline); elevated day strain (8.0 of 21)"
+user_106,2026-09-06,50.2,63,7.84,79,7.7,25,"elevated day strain (7.7 of 21); low recovery (79%, HRV -15% / RHR +3% vs personal baseline)"
+user_106,2026-09-07,56.3,62,7.68,85,10.3,26,"elevated day strain (10.3 of 21); low recovery (85%, HRV -5% / RHR +2% vs personal baseline)"
+user_106,2026-09-08,54.1,66,7.27,77,10.0,30,"elevated day strain (10.0 of 21); low recovery (77%, HRV -9% / RHR +8% vs personal baseline)"
+user_106,2026-09-09,47.8,68,7.73,72,12.9,37,"elevated day strain (12.9 of 21); low recovery (72%, HRV -19% / RHR +11% vs personal baseline)"
+user_106,2026-09-10,41.5,70,7.17,64,9.8,37,"low recovery (64%, HRV -30% / RHR +15% vs personal baseline); elevated day strain (9.8 of 21)"
+user_106,2026-09-11,58.2,65,6.39,81,12.9,34,"elevated day strain (12.9 of 21); low recovery (81%, HRV -2% / RHR +6% vs personal baseline)"
+user_106,2026-09-12,45.2,69,6.84,69,10.0,35,"low recovery (69%, HRV -24% / RHR +13% vs personal baseline); elevated day strain (10.0 of 21)"
+user_106,2026-09-13,55.0,64,8.22,82,9.2,25,"elevated day strain (9.2 of 21); low recovery (82%, HRV -7% / RHR +5% vs personal baseline)"
+user_106,2026-09-14,54.1,61,8.04,84,10.1,26,"elevated day strain (10.1 of 21); low recovery (84%, HRV -9% / RHR -0% vs personal baseline)"
+user_106,2026-09-15,48.4,68,7.09,73,12.5,37,"elevated day strain (12.5 of 21); low recovery (73%, HRV -18% / RHR +11% vs personal baseline)"
+user_106,2026-09-16,40.7,73,7.35,61,10.9,40,"low recovery (61%, HRV -31% / RHR +20% vs personal baseline); elevated day strain (10.9 of 21)"
+user_106,2026-09-17,44.7,66,6.54,71,13.0,39,"elevated day strain (13.0 of 21); low recovery (71%, HRV -25% / RHR +8% vs personal baseline)"
+user_106,2026-09-18,43.6,71,6.68,65,10.3,38,"low recovery (65%, HRV -27% / RHR +16% vs personal baseline); elevated day strain (10.3 of 21)"
+user_106,2026-09-19,50.0,66,7.6,76,9.1,29,"elevated day strain (9.1 of 21); low recovery (76%, HRV -16% / RHR +8% vs personal baseline)"
