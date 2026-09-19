@@ -24,13 +24,18 @@ __all__ = ["GeminiClient", "load_env", "repo_root", "parse_json_loose"]
 
 _API_BASE = "https://generativelanguage.googleapis.com/v1beta/models"
 _DEFAULT_MODEL = "gemini-2.5-flash"
-_DEFAULT_FALLBACK = "gemini-2.5-flash-lite"
+_DEFAULT_FALLBACK = "gemini-3.5-flash-lite"
 # Verified 2026-09-19 against the live models.list endpoint: the documented
 # default fallback (gemini-2.5-flash-lite) now 404s for newer API keys --
 # "no longer available to new users". Since the fallback IS the rate-limit
 # escape hatch, we try these known-good cheap models after it rather than
 # letting the demo die on a 429.
-_EXTRA_FALLBACKS = ("gemini-3.5-flash-lite", "gemini-flash-lite-latest", "gemini-2.5-flash")
+# Verified live on 2026-09-19 against our key: gemini-2.5-flash and
+# gemini-3.5-flash-lite return 200. gemini-2.5-flash-lite 404s (retired for new
+# keys) and gemini-3.8-flash 429s (not on our free quota) -- both are deliberately
+# absent, since a dead model in the chain costs a wasted HTTP round trip on every
+# single call and the chain exists to SAVE us during a rate limit, not burn quota.
+_EXTRA_FALLBACKS = ("gemini-2.5-flash", "gemini-flash-lite-latest")
 _BACKOFFS = (1.0, 2.0, 4.0)
 _TIMEOUT_S = 60
 _PLACEHOLDER_KEYS = ("your_key_here", "none", "changeme", "")

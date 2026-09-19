@@ -125,8 +125,29 @@ def narrate(
     if not isinstance(payload, dict):
         return None
 
-    insight = str(payload.get("insight_text") or "").strip()
-    action = str(payload.get("suggested_action") or "").strip()
+    insight = _clean_field(str(payload.get("insight_text") or ""))
+    action = _clean_field(str(payload.get("suggested_action") or ""))
+
+    # The model sometimes jams both fields into insight_text with a literal
+    # "SUGGESTED ACTION:" header instead of filling the second key. Recover the
+    # split rather than shipping the header to the employee.
+    for marker in ("SUGGESTED ACTION:", "Suggested action:", "SUGGESTED_ACTION:"):
+        if marker in insight:
+            head, _, tail = insight.partition(marker)
+            insight = _clean_field(head)
+            action = action or _clean_field(tail)
+            break
+
     if not insight or not action:
         return None
     return {"insight_text": insight, "suggested_action": action}
+
+
+def _clean_field(text: str) -> str:
+    """Strip stray field labels, markdown emphasis and quotes off a model string."""
+    out = text.strip().strip('"').strip()
+    for label in ("INSIGHT:", "Insight:", "INSIGHT_TEXT:", "insight_text:",
+                  "SUGGESTED ACTION:", "Suggested action:", "suggested_action:"):
+        if out.startswith(label):
+            out = out[len(label):].strip()
+    return out.strip("*").strip()

@@ -26,11 +26,18 @@ from datetime import datetime
 from pathlib import Path
 from typing import Any
 
-if __package__ in (None, ""):  # allow running as a plain script
+if __package__ in (None, ""):
+    # Running as a plain script (`python path/to/pipeline.py`). Re-exec through the
+    # package so that the relative imports inside the functions below resolve too --
+    # putting src on sys.path only fixes module-level imports, which left the usage
+    # line in this very docstring broken.
     sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
-    from insight.models import PersonTimeline, ValidatedPattern, CriticVerdict
-else:
-    from .models import PersonTimeline, ValidatedPattern, CriticVerdict
+    import runpy
+
+    runpy.run_module("insight.pipeline", run_name="__main__", alter_sys=True)
+    raise SystemExit(0)
+
+from .models import PersonTimeline, ValidatedPattern, CriticVerdict  # noqa: E402
 
 REPO_ROOT = Path(__file__).resolve().parents[3]
 DEFAULT_FIXTURES = REPO_ROOT / "part3" / "data" / "fixtures"

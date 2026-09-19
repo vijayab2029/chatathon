@@ -25,10 +25,17 @@ __all__ = ["review", "deterministic_check", "build_prompt"]
 
 
 # Rule 1: clinical / diagnostic vocabulary.
+#
+# These must be words that ASSERT a clinical claim. A bare "diagnos" stem was
+# here originally and flagged our own disclaimer -- "this is a correlation, not a
+# diagnosis" -- so every offline record logged a rejection it had not earned. A
+# safety control that cries wolf on correct output teaches you to ignore it, so
+# the diagnostic entries below are the asserting forms only.
 _CLINICAL_TERMS: tuple[str, ...] = (
+    "diagnosed", "diagnosis of", "diagnostic criteria",
     "burning out", "burnt out", "burned out", "burnout",
     "anxiety", "anxious", "depressed", "depression", "depressive",
-    "mental health", "mental illness", "disorder", "diagnos",
+    "mental health", "mental illness", "disorder",
     "symptom", "clinical", "therapy", "therapist", "medication",
     "unhealthy", "patholog", "trauma", "adhd", "insomnia",
     "chronic stress", "breakdown", "at risk of", "suffering from",
