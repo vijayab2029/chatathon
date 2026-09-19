@@ -7,16 +7,16 @@
   "team_size": 6,
   "metrics": {
     "avg_daily_meetings_per_person": 3.6,
-    "avg_daily_meeting_minutes_per_person": 180.4,
-    "pct_meetings_back_to_back": 40.6,
-    "pct_days_without_lunch_buffer": 30.8,
+    "avg_daily_meeting_minutes_per_person": 181.1,
+    "pct_meetings_back_to_back": 40.8,
+    "pct_days_without_lunch_buffer": 32.5,
     "pct_meetings_without_agenda": 31.2,
     "pct_meetings_after_hours": 6.5
   },
   "structural_stress_profile": {
     "fragmentation_index": "High",
     "buffer_compliance_rating": "Critical",
-    "primary_calendar_bottleneck": "Meetings consuming the protected midday window (11:30 AM - 2:00 PM) on 30.8% of working days, leaving no contiguous 30-minute break"
+    "primary_calendar_bottleneck": "Meetings consuming the protected midday window (11:30 AM - 2:00 PM) on 32.5% of working days, leaving no contiguous 30-minute break"
   },
   "privacy_audit": {
     "contains_pii": false,

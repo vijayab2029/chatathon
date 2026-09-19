@@ -111,11 +111,16 @@ HS_CRUNCH_MON = [("09:00", 60), ("10:00", 45), ("11:30", 60), ("12:35", 70), ("1
 HS_CRUNCH_FRI = [("08:15", 45), ("09:00", 60), ("10:05", 40), ("11:45", 75), ("13:00", 50)]
 
 # Week 2 escalation: 4-5 meetings/day, at least 2 back-to-back transitions every day,
-# lunch starting to disappear mid-week, first after-hours session appears.
+# first after-hours session appears, and - the part that actually drives Part 1's week-2
+# physiology - the midday window goes on Tue/Wed/Thu. Lunch loss is the single heaviest
+# term in Part 1's cognitive_load (0.25), so it has to climb monotonically across the arc:
+# 2 of 5 workdays in week 1 (inherited from the baseline templates), 3 of 5 here, then all
+# 5 in the crunch weeks. Tue and Thu keep their meeting COUNT and stay at 2-3 back-to-back
+# transitions - only the midday block is colonized, so week 2 reads as erosion, not crunch.
 HS_W2_MON = [("09:00", 60), ("10:00", 30), ("10:35", 45), ("13:30", 60)]
-HS_W2_TUE = [("09:30", 45), ("10:15", 60), ("11:20", 55), ("13:00", 45), ("16:00", 60)]
+HS_W2_TUE = [("09:30", 45), ("10:15", 60), ("11:20", 55), ("12:20", 75), ("16:00", 60)]
 HS_W2_WED = [("09:00", 30), ("09:30", 60), ("10:35", 45), ("11:45", 60), ("12:50", 55)]
-HS_W2_THU = [("09:00", 60), ("10:00", 45), ("11:00", 60), ("12:05", 40), ("17:45", 40)]
+HS_W2_THU = [("09:00", 60), ("10:00", 45), ("11:00", 60), ("12:05", 90), ("17:45", 40)]
 HS_W2_FRI = [("09:15", 45), ("10:00", 60), ("11:05", 40), ("14:00", 45)]
 
 # --- user_102 / user_104: the balanced cohort ------------------------------------------

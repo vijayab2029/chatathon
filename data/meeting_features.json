@@ -121,13 +121,13 @@
     "date": "2026-09-01",
     "day_of_week": "Tuesday",
     "total_meetings": 5,
-    "total_meeting_minutes": 265,
-    "back_to_back_count": 2,
-    "no_lunch_buffer": false,
+    "total_meeting_minutes": 295,
+    "back_to_back_count": 3,
+    "no_lunch_buffer": true,
     "after_hours_count": 0,
     "no_agenda_pct": 0.4,
-    "avg_attendee_count": 6.8,
-    "longest_continuous_meeting_stretch_min": 160
+    "avg_attendee_count": 7.2,
+    "longest_continuous_meeting_stretch_min": 235
   },
   {
     "person_id": "user_101",
@@ -147,13 +147,13 @@
     "date": "2026-09-03",
     "day_of_week": "Thursday",
     "total_meetings": 5,
-    "total_meeting_minutes": 245,
+    "total_meeting_minutes": 295,
     "back_to_back_count": 2,
-    "no_lunch_buffer": false,
+    "no_lunch_buffer": true,
     "after_hours_count": 1,
     "no_agenda_pct": 0.6,
-    "avg_attendee_count": 7.6,
-    "longest_continuous_meeting_stretch_min": 105
+    "avg_attendee_count": 7.8,
+    "longest_continuous_meeting_stretch_min": 150
   },
   {
     "person_id": "user_101",
