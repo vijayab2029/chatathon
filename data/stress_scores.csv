@@ -1,0 +1,43 @@
+person_id,date,stress_score,contributing_factors
+user_101,2026-09-13,2,no significant stress drivers
+user_101,2026-09-14,1,no significant stress drivers
+user_101,2026-09-15,11,low recovery (87%); reduced HRV (-13% vs personal baseline)
+user_101,2026-09-16,43,low recovery (56%); reduced HRV (-51% vs personal baseline); elevated resting heart rate (+40% vs personal baseline)
+user_101,2026-09-17,43,low recovery (54%); reduced HRV (-51% vs personal baseline); elevated resting heart rate (+42% vs personal baseline)
+user_101,2026-09-18,38,low recovery (59%); reduced HRV (-46% vs personal baseline); elevated resting heart rate (+42% vs personal baseline)
+user_101,2026-09-19,37,low recovery (61%); reduced HRV (-47% vs personal baseline); elevated resting heart rate (+35% vs personal baseline)
+user_102,2026-09-13,2,no significant stress drivers
+user_102,2026-09-14,2,no significant stress drivers
+user_102,2026-09-15,6,no significant stress drivers
+user_102,2026-09-16,5,no significant stress drivers
+user_102,2026-09-17,8,low recovery (91%)
+user_102,2026-09-18,5,no significant stress drivers
+user_102,2026-09-19,4,no significant stress drivers
+user_103,2026-09-13,1,no significant stress drivers
+user_103,2026-09-14,1,no significant stress drivers
+user_103,2026-09-15,20,low recovery (77%); reduced HRV (-30% vs personal baseline); elevated resting heart rate (+18% vs personal baseline)
+user_103,2026-09-16,20,low recovery (79%); reduced HRV (-23% vs personal baseline); elevated resting heart rate (+24% vs personal baseline)
+user_103,2026-09-17,10,low recovery (88%)
+user_103,2026-09-18,21,low recovery (76%); reduced HRV (-23% vs personal baseline); elevated resting heart rate (+29% vs personal baseline)
+user_103,2026-09-19,9,low recovery (88%)
+user_104,2026-09-13,2,no significant stress drivers
+user_104,2026-09-14,3,no significant stress drivers
+user_104,2026-09-15,3,no significant stress drivers
+user_104,2026-09-16,8,low recovery (90%)
+user_104,2026-09-17,7,low recovery (91%)
+user_104,2026-09-18,6,no significant stress drivers
+user_104,2026-09-19,4,no significant stress drivers
+user_105,2026-09-13,1,no significant stress drivers
+user_105,2026-09-14,1,no significant stress drivers
+user_105,2026-09-15,27,low recovery (72%); reduced HRV (-31% vs personal baseline); elevated resting heart rate (+31% vs personal baseline)
+user_105,2026-09-16,8,low recovery (89%)
+user_105,2026-09-17,27,low recovery (71%); reduced HRV (-37% vs personal baseline); elevated resting heart rate (+28% vs personal baseline)
+user_105,2026-09-18,17,low recovery (82%); reduced HRV (-19% vs personal baseline); elevated resting heart rate (+21% vs personal baseline)
+user_105,2026-09-19,19,low recovery (78%); reduced HRV (-29% vs personal baseline); elevated resting heart rate (+17% vs personal baseline)
+user_106,2026-09-13,4,no significant stress drivers
+user_106,2026-09-14,2,no significant stress drivers
+user_106,2026-09-15,11,low recovery (87%)
+user_106,2026-09-16,28,low recovery (71%); reduced HRV (-37% vs personal baseline); elevated resting heart rate (+28% vs personal baseline)
+user_106,2026-09-17,13,low recovery (85%); reduced HRV (-15% vs personal baseline); elevated resting heart rate (+16% vs personal baseline)
+user_106,2026-09-18,11,low recovery (87%); elevated resting heart rate (+16% vs personal baseline); reduced HRV (-12% vs personal baseline)
+user_106,2026-09-19,28,low recovery (67%); reduced HRV (-37% vs personal baseline); elevated resting heart rate (+36% vs personal baseline)
