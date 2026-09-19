@@ -1,0 +1,9 @@
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+.env
+part3/.env
+part3/data/out/*.json
+.llm_cache/
+.pytest_cache/
