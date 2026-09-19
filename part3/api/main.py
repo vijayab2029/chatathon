@@ -7,7 +7,11 @@
 # Privacy split:
 #   /employee/{id}      -> PRIVATE, per-person. Part 5 shows a person only
 #                          their own record.
-#   /team/correlations  -> person-free aggregate. Part 4 owns the k>=5 gate.
+#   /team/correlations  -> person-free aggregate, GATED at k>=5 by default.
+#                          Add ?raw=true for ungated counts (Part 4's input).
+#                          Safe by default: 8 of 9 patterns on the real data
+#                          covered a single person, so an ungated default would
+#                          have shipped a k=1 employer view.
 #
 # Run:  uvicorn api.main:app --reload --port 8000 --app-dir part3
 
@@ -38,13 +42,16 @@ STRESS_CSV = FIXTURES_DIR / "stress_scores.csv"
 MEETINGS_JSON = FIXTURES_DIR / "meeting_features.json"
 EMPLOYEE_JSON = OUT_DIR / "employee_insight.json"
 TEAM_JSON = OUT_DIR / "team_correlations.json"
+RAW_TEAM_JSON = OUT_DIR / "team_correlations_raw.json"
 
 app = FastAPI(
     title="Part 3 -- Correlation & Insight Engine (SIMULATED DATA)",
     description=(
         "LLM agents propose, Python proves. All data is synthetic. "
-        "employee_insight.json is private/per-person; team_correlations.json "
-        "carries no person_id and is ungated -- Part 4 owns the k>=5 gate."
+        "employee_insight.json is private/per-person. team_correlations.json "
+        "carries no person_id and is GATED at k>=5 by default; add ?raw=true "
+        "for ungated counts, which is Part 4's input. Part 4 owns the "
+        "authoritative policy -- the gate here is a safe default."
     ),
     version="0.1.0",
 )
@@ -134,6 +141,21 @@ def employee(person_id: str) -> dict[str, Any]:
 
 
 @app.get("/team/correlations")
-def team_correlations() -> dict[str, Any]:
-    """Person-free team aggregate. Part 4 consumes this and gates it at k>=5."""
+def team_correlations(raw: bool = False) -> dict[str, Any]:
+    """Person-free team aggregate.
+
+    Default is GATED at k>=5: patterns covering fewer than five distinct people
+    are withheld, and the count withheld is reported rather than hidden.
+
+    `?raw=true` returns ungated counts. That is Part 4's input -- it needs the
+    honest numbers to apply the authoritative policy -- but it must be asked
+    for explicitly so that no employer-facing surface gets it by accident.
+    """
+    if raw:
+        payload = _read_json(RAW_TEAM_JSON)
+        payload["warning"] = (
+            "UNGATED: includes patterns covering fewer than k people. "
+            "Do not render this in an employer view without applying the gate."
+        )
+        return payload
     return _read_json(TEAM_JSON)

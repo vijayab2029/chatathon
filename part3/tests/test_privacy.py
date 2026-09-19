@@ -58,6 +58,12 @@ def offline_run(tmp_path_factory):
         "out_dir": out_dir,
         "team_text": team_path.read_text(encoding="utf-8"),
         "team": json.loads(team_path.read_text(encoding="utf-8")),
+        # The ungated artifact Part 4 consumes. Since spec 3.1 the plain
+        # filename carries the GATED view, so the "Part 3 reports honest
+        # counts" guarantee now lives on this file.
+        "team_raw": json.loads(
+            (out_dir / "team_correlations_raw.json").read_text(encoding="utf-8")
+        ),
         "employee": json.loads(employee_path.read_text(encoding="utf-8")),
     }
 
@@ -99,27 +105,30 @@ def test_team_file_is_not_a_concatenation_of_employee_insights(offline_run):
 
 
 # ---------------------------------------------------------------------------
-# 2. Part 3 does not gate -- Part 4 owns k-anonymity
+# 2. The analytics/policy split (revised -- see spec 3.1)
+#
+# Part 3 still refuses to make policy: the RAW file carries honest counts,
+# including sub-threshold ones, because Part 4 needs them to apply the
+# authoritative gate. What changed is which file gets the plain name -- the
+# safe one does, so the accidental path is the safe path.
 # ---------------------------------------------------------------------------
 
-def test_part3_applies_no_k_anonymity_gate(offline_run):
-    """Contract boundary: Part 3 hands Part 4 honest counts, INCLUDING counts
-    below the k>=5 floor. Part 4 owns the policy. If this flips to true,
-    analytics has started making policy decisions and the split is broken.
-    """
-    team = offline_run["team"]
-    assert team["gating_applied"] is False
-    assert "gating_note" in team and "Part 4" in team["gating_note"]
+def test_raw_file_hands_part4_honest_ungated_counts(offline_run):
+    """If this flips to gated, Part 4 can no longer see what it is deciding
+    about and the analytics/policy split is broken."""
+    raw = offline_run["team_raw"]
+    assert raw["gating_applied"] is False
+    assert "gating_note" in raw and "Part 4" in raw["gating_note"]
 
 
-def test_counts_below_the_k_floor_are_still_reported(offline_run):
-    """Nothing may be suppressed here. Every pattern is emitted with its real
+def test_raw_file_reports_counts_below_the_k_floor(offline_run):
+    """Nothing is suppressed in the raw artifact. Every pattern keeps its real
     count, even when n_people_affected < 5."""
-    team = offline_run["team"]
-    assert team["patterns"], "expected at least one aggregated pattern"
-    for pattern in team["patterns"]:
+    raw = offline_run["team_raw"]
+    assert raw["patterns"], "expected at least one aggregated pattern"
+    for pattern in raw["patterns"]:
         assert pattern["n_people_affected"] >= 1
-        assert pattern["n_people_affected"] <= pattern["n_people_analysed"]
+        assert pattern["n_people_affected"] <= raw["n_people_analysed"]
 
 
 # ---------------------------------------------------------------------------
@@ -221,3 +230,88 @@ def test_aggregate_output_has_no_person_id_even_when_input_does():
     raw = json.dumps(asdict(team))
     assert "emp_" not in raw
     assert "person_id" not in raw
+
+
+# ---------------------------------------------------------------------------
+# Safe-by-default k-anonymity gate (spec section 3.1, insight/gating.py)
+#
+# These guard the control that stops a single person's pattern being rendered
+# as a team "aggregate". On the real Part 1/2 data 8 of 9 patterns covered
+# exactly one person, so the default has to be the safe one.
+# ---------------------------------------------------------------------------
+
+from insight.gating import DEFAULT_K, apply_k_anonymity  # noqa: E402
+from insight.models import TeamCorrelations  # noqa: E402
+
+
+def _team(counts, n_people=12):
+    return TeamCorrelations(
+        n_people_analysed=n_people,
+        date_range=("2026-08-24", "2026-09-20"),
+        patterns=[
+            {"feature": f"f{i}", "n_people_affected": c, "severity_band": "moderate",
+             "calendar_fact": f"fact {i}"}
+            for i, c in enumerate(counts)
+        ],
+    )
+
+
+def test_gate_suppresses_patterns_below_k():
+    gated = apply_k_anonymity(_team([1, 2, 4, 5, 9]), k=5)
+    kept = [p["n_people_affected"] for p in gated.patterns]
+    assert kept == [5, 9], "patterns under k must be withheld"
+    assert gated.gating_applied is True
+
+
+def test_gate_reports_what_it_withheld_rather_than_hiding_it():
+    gated = apply_k_anonymity(_team([1, 1, 1, 7]), k=5)
+    assert "3 of 4" in gated.gating_note
+    assert "k=5" in gated.gating_note
+
+
+def test_gate_blocks_everything_when_the_team_itself_is_too_small():
+    # A four-person "team" has no employer view at all, however the patterns
+    # are counted -- this is the two-employees-at-different-stress-levels case.
+    gated = apply_k_anonymity(_team([4, 4, 4], n_people=4), k=5)
+    assert gated.patterns == []
+    assert "below the k=5 floor" in gated.gating_note
+
+
+def test_gate_does_not_mutate_its_input():
+    original = _team([1, 9])
+    apply_k_anonymity(original, k=5)
+    assert len(original.patterns) == 2, "Part 4 still needs the honest counts"
+    assert original.gating_applied is False
+
+
+def test_default_k_matches_the_design_plan():
+    assert DEFAULT_K == 5
+
+
+def test_written_team_file_is_gated_and_raw_file_is_not(tmp_path):
+    """The plain filename must carry the SAFE artifact.
+
+    Anyone wiring an employer view without reading the docs reaches for
+    team_correlations.json; the ungated counts must require asking by name.
+    """
+    run_pipeline(offline=True, out_dir=tmp_path)
+
+    gated = json.loads((tmp_path / "team_correlations.json").read_text(encoding="utf-8"))
+    raw = json.loads((tmp_path / "team_correlations_raw.json").read_text(encoding="utf-8"))
+
+    assert gated["gating_applied"] is True
+    assert raw["gating_applied"] is False
+
+    for pattern in gated["patterns"]:
+        assert pattern["n_people_affected"] >= DEFAULT_K, (
+            f"gated file leaked a k={pattern['n_people_affected']} pattern: "
+            f"{pattern.get('calendar_fact')}"
+        )
+
+    assert len(raw["patterns"]) >= len(gated["patterns"])
+
+    # Neither file may carry identifiers, gated or not.
+    for blob in ((tmp_path / "team_correlations.json").read_text(encoding="utf-8"),
+                 (tmp_path / "team_correlations_raw.json").read_text(encoding="utf-8")):
+        assert "person_id" not in blob
+        assert "emp_" not in blob

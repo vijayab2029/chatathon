@@ -153,6 +153,7 @@ def calendar_fact(
     operator: str,
     threshold: float,
     lag_days: int,
+    lift: float | None = None,
 ) -> str:
     """An employer-safe sentence about a SCHEDULE SHAPE, not about a person.
 
@@ -179,12 +180,19 @@ def calendar_fact(
         described = FEATURE_VOCABULARY.get(feature, feature.replace("_", " "))
         subject = f"Days where the {described} is {q}"
 
+    # Direction matters. focus_time_minutes carries a NEGATIVE lift -- more
+    # focus time, less strain -- and the fixed "higher strain" wording inverted
+    # it, telling a manager that protecting focus time causes strain. An
+    # employer acting on that does the opposite of the right thing, so the
+    # sentence follows the sign of the effect.
+    direction = "lower" if lift is not None and lift < 0 else "higher"
+
     if lag_days == 0:
-        tail = "are associated with measurably higher strain the same day."
+        tail = f"are associated with measurably {direction} strain the same day."
     elif lag_days == 1:
-        tail = "are followed by measurably higher strain."
+        tail = f"are followed by measurably {direction} strain."
     else:
-        tail = f"are followed by measurably higher strain {lag_days} days later."
+        tail = f"are followed by measurably {direction} strain {lag_days} days later."
     return f"{subject} {tail}"
 
 
@@ -265,28 +273,50 @@ def aggregate_team_patterns(
     lift, date, meeting title or other individual value is carried through --
     only the mean and max across the group.
     """
-    # key -> {"lifts": {person_id: lift}}   (the inner dict never escapes)
-    groups: dict[tuple[str, str, float, int], dict[str, dict[str, float]]] = {}
+    # Grouped by (feature, lag) -- deliberately NOT by threshold.
+    #
+    # Adaptive hypotheses derive each person's cut point from their own
+    # distribution, so including the threshold in the key gave every person a
+    # private group of one: 29 patterns, every n_people_affected == 1, and the
+    # k>=5 gate correctly withheld all of them. An empty employer view is not a
+    # privacy win, it is a broken aggregation.
+    #
+    # "no-agenda meetings precede strain for 8 people" is also the honest
+    # employer-facing claim. An exact cut point is a per-person detail, and
+    # publishing it is part of what made these patterns re-identifying.
+    groups: dict[tuple[str, int], dict[str, Any]] = {}
 
     for person_id, patterns in (per_person or {}).items():
         for pattern in patterns or []:
             if not getattr(pattern, "passed", False):
                 continue
             h = pattern.hypothesis
-            key = (h.feature, str(h.operator), float(h.threshold), int(h.lag_days))
-            lifts = groups.setdefault(key, {"lifts": {}})["lifts"]
+            key = (h.feature, int(h.lag_days))
+            bucket = groups.setdefault(
+                key, {"lifts": {}, "thresholds": [], "operators": []}
+            )
+            lifts = bucket["lifts"]
             # If one person somehow has the same key twice, keep the strongest.
             prev = lifts.get(person_id)
             if prev is None or abs(pattern.lift) > abs(prev):
                 lifts[person_id] = float(pattern.lift)
+            bucket["thresholds"].append(float(h.threshold))
+            bucket["operators"].append(str(h.operator))
 
     team_patterns: list[TeamPattern] = []
-    for (feature, operator, threshold, lag_days), bucket in groups.items():
+    for (feature, lag_days), bucket in groups.items():
         by_person = bucket["lifts"]
         n_affected = len(by_person)              # DISTINCT people
         lift_values = list(by_person.values())   # person ids dropped here
         mean_lift = sum(lift_values) / len(lift_values)
         max_lift = max(lift_values, key=abs)
+
+        # Representative cut point: the median across the group. One person's
+        # exact adaptive threshold is identifying and is never published alone.
+        thresholds = sorted(bucket["thresholds"])
+        threshold = thresholds[len(thresholds) // 2]
+        operators = bucket["operators"]
+        operator = max(set(operators), key=operators.count)
         team_patterns.append(
             TeamPattern(
                 feature=feature,
@@ -299,7 +329,9 @@ def aggregate_team_patterns(
                 mean_lift_points=round(mean_lift, 1),
                 max_lift_points=round(max_lift, 1),
                 severity_band=_severity_band(mean_lift),
-                calendar_fact=calendar_fact(feature, operator, threshold, lag_days),
+                calendar_fact=calendar_fact(
+                    feature, operator, threshold, lag_days, mean_lift
+                ),
             )
         )
 
@@ -355,8 +387,21 @@ def write_outputs(
     employee_path.write_text(
         json.dumps(employee_doc, indent=2, ensure_ascii=False), encoding="utf-8"
     )
-    team_path.write_text(
+
+    # The plain filename gets the SAFE artifact and the ungated one has to be
+    # asked for by name. Anyone wiring an employer view without reading the docs
+    # lands on the gated file by default. Part 4 reads the _raw file and applies
+    # its own authoritative policy. See gating.py and spec section 3.1.
+    from .gating import apply_k_anonymity
+
+    raw_path = out / "team_correlations_raw.json"
+    raw_path.write_text(
         json.dumps(_jsonable(team_correlations), indent=2, ensure_ascii=False),
+        encoding="utf-8",
+    )
+    team_path.write_text(
+        json.dumps(_jsonable(apply_k_anonymity(team_correlations)), indent=2,
+                   ensure_ascii=False),
         encoding="utf-8",
     )
     return employee_path, team_path

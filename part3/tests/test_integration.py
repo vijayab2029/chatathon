@@ -72,13 +72,21 @@ def test_pipeline_writes_both_files(offline_run):
         assert record["suggested_action"].strip(), f"{person_id} has no suggested action"
         assert record["average_stress"] > 0
 
-    team = offline_run["team"]
-    assert team["patterns"], "team_correlations.json has no patterns"
-    assert team["n_people_analysed"] == 6
+    # Read the raw artifact here: the gated file may legitimately be empty when
+    # no pattern clears k, which says nothing about whether the pipeline ran.
+    raw_path = out_dir / "team_correlations_raw.json"
+    assert raw_path.is_file(), "team_correlations_raw.json was not written"
+    raw = json.loads(raw_path.read_text(encoding="utf-8"))
+    assert raw["patterns"], "team_correlations_raw.json has no patterns"
+    assert raw["n_people_analysed"] == 6
+
+    # The gated file is a subset of the raw one, never a superset.
+    gated = offline_run["team"]
+    assert len(gated["patterns"]) <= len(raw["patterns"])
 
     summary = offline_run["summary"]
     assert summary["n_people"] == 6
-    assert summary["n_patterns_found"] == len(team["patterns"])
+    assert summary["n_patterns_found"] == len(raw["patterns"])
     assert summary["data_provenance"] == "SIMULATED"
 
 
