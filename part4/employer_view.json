@@ -1,6 +1,6 @@
 {
   "gate_passed": true,
-  "team_size": 6,
+  "team_size": 12,
   "min_team_size": 5,
   "categories": [
     {
@@ -9,7 +9,7 @@
     },
     {
       "category": "back_to_back_density",
-      "severity": "moderate"
+      "severity": "high"
     },
     {
       "category": "no_agenda_rate",
@@ -26,11 +26,120 @@
   ],
   "recommended_actions": [
     "Review whether recurring meetings this week can be shortened or made async.",
-    "Suggest adding buffer time between back-to-back blocks where possible.",
+    "Run a workload check-in this week \u2014 back-to-back scheduling is elevated team-wide.",
     "Encourage agenda-required norms for recurring meetings.",
     "Check whether after-hours meetings are avoidable for most attendees.",
     "Consider protecting a midday buffer window on the team calendar."
   ],
-  "validated_patterns": [],
+  "validated_patterns": [
+    {
+      "calendar_fact": "Days with 1+ meetings booked without an agenda are followed by measurably higher strain.",
+      "severity_band": "moderate",
+      "n_people_affected": 11,
+      "mean_lift_points": 11.3
+    },
+    {
+      "calendar_fact": "Days that switch between 3+ different meeting topics are followed by measurably higher strain.",
+      "severity_band": "moderate",
+      "n_people_affected": 11,
+      "mean_lift_points": 11.0
+    },
+    {
+      "calendar_fact": "Days holding 2+ meetings are followed by measurably higher strain.",
+      "severity_band": "moderate",
+      "n_people_affected": 11,
+      "mean_lift_points": 10.9
+    },
+    {
+      "calendar_fact": "Days with 120+ minutes booked in meetings are followed by measurably higher strain.",
+      "severity_band": "moderate",
+      "n_people_affected": 11,
+      "mean_lift_points": 10.6
+    },
+    {
+      "calendar_fact": "Days containing a run of 2+ consecutive back-to-back meetings are followed by measurably higher strain.",
+      "severity_band": "moderate",
+      "n_people_affected": 11,
+      "mean_lift_points": 9.5
+    },
+    {
+      "calendar_fact": "Days with 1+ back-to-back meeting blocks are followed by measurably higher strain.",
+      "severity_band": "moderate",
+      "n_people_affected": 11,
+      "mean_lift_points": 9.3
+    },
+    {
+      "calendar_fact": "Days leaving 480+ minutes of uninterrupted focus time are associated with measurably lower strain the same day.",
+      "severity_band": "moderate",
+      "n_people_affected": 11,
+      "mean_lift_points": -7.4
+    },
+    {
+      "calendar_fact": "Days leaving 360+ minutes of uninterrupted focus time are followed by measurably lower strain.",
+      "severity_band": "moderate",
+      "n_people_affected": 11,
+      "mean_lift_points": -10.0
+    },
+    {
+      "calendar_fact": "Days with 1+ meetings whose title or description reads negatively are followed by measurably higher strain.",
+      "severity_band": "moderate",
+      "n_people_affected": 10,
+      "mean_lift_points": 10.0
+    },
+    {
+      "calendar_fact": "Days holding 2+ meetings are associated with measurably higher strain the same day.",
+      "severity_band": "moderate",
+      "n_people_affected": 10,
+      "mean_lift_points": 8.7
+    },
+    {
+      "calendar_fact": "Days with 1+ meetings of more than 8 attendees are followed by measurably higher strain.",
+      "severity_band": "moderate",
+      "n_people_affected": 9,
+      "mean_lift_points": 10.2
+    },
+    {
+      "calendar_fact": "Days that switch between 2+ different meeting topics are associated with measurably higher strain the same day.",
+      "severity_band": "moderate",
+      "n_people_affected": 9,
+      "mean_lift_points": 8.8
+    },
+    {
+      "calendar_fact": "Days with 120+ minutes booked in meetings are associated with measurably higher strain the same day.",
+      "severity_band": "moderate",
+      "n_people_affected": 9,
+      "mean_lift_points": 8.2
+    },
+    {
+      "calendar_fact": "Days with 1+ meetings booked without an agenda are associated with measurably higher strain the same day.",
+      "severity_band": "moderate",
+      "n_people_affected": 9,
+      "mean_lift_points": 7.2
+    },
+    {
+      "calendar_fact": "Days with 1+ meetings of more than 8 attendees are associated with measurably higher strain the same day.",
+      "severity_band": "low",
+      "n_people_affected": 9,
+      "mean_lift_points": 6.9
+    },
+    {
+      "calendar_fact": "Days with 1+ recurring-series meetings are associated with measurably higher strain the same day.",
+      "severity_band": "moderate",
+      "n_people_affected": 8,
+      "mean_lift_points": 7.9
+    },
+    {
+      "calendar_fact": "Days with 1+ meetings whose title or description reads negatively are associated with measurably higher strain the same day.",
+      "severity_band": "moderate",
+      "n_people_affected": 7,
+      "mean_lift_points": 7.7
+    },
+    {
+      "calendar_fact": "Days with 1+ recurring-series meetings are followed by measurably higher strain.",
+      "severity_band": "moderate",
+      "n_people_affected": 5,
+      "mean_lift_points": 7.9
+    }
+  ],
   "gating_applied": true
 }
