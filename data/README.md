@@ -13,7 +13,10 @@ account, no real calendar. Regenerate with the scripts in `scripts/`.
 | `stress_scores.csv` | `scripts/part1_biometrics/generate_biometrics.py` | Per-person, private |
 
 Cohort and window must stay in sync across generators: `user_101`–`user_106`,
-`2026-09-13` to `2026-09-19`.
+`2026-08-23` (Sunday) to `2026-09-19` (Saturday) — 28 days, exactly four Sun–Sat
+weeks, 168 person-day rows per artifact. The window is four whole weeks on purpose:
+week boundaries fall on real week boundaries, so week-over-week trends are not an
+artifact of where the window happens to start.
 
 ## Important for Part 3 (correlation/insight engine): the join is lagged, not same-day
 
@@ -25,8 +28,54 @@ Today's meeting load only drives today's `strain` (same-day, in `whoop_biometric
 **When joining `meeting_features.json` against `stress_scores.csv`/`whoop_biometrics.csv`,
 shift the calendar side back one day** (features for D-1 explain recovery/stress on D).
 Joining same-date will find a much weaker, noisier relationship than what's actually
-in the data — the generator verified a same-cohort lag-1 correlation of **-0.98**
+in the data — the generator verified a same-cohort lag-1 correlation of **-0.94**
 (prior-day meeting load → next-day recovery); a same-day join won't reproduce that.
+
+## Acute and chronic: what the 28-day window adds over the original 7
+
+The 7-day version of this data only ever carried the acute lag above. Over four weeks
+the generator also models **accumulation**, and both terms are explicit:
+
+| term | definition | what it produces |
+|---|---|---|
+| acute | yesterday's meeting load | the day-over-day drop |
+| chronic | trailing 7-day mean meeting load | the week-over-week slide |
+
+`user_101` is the trajectory case: an escalating calendar drives workday recovery
+`65.0% → 53.2% → 41.0% → 34.6%` across the four weeks, into WHOOP's red band, while
+`user_102`/`user_104` (protected calendars) hold 78% all month. Nobody's physiology is
+special — only the calendar exposure differs.
+
+Two consequences for anyone analysing this data:
+
+- **Weekend rebound weakens over the month.** The acute term releases on a Sunday, the
+  chronic term does not (`user_101`: 75.0% week 1 → 51.0% week 4). Treating all weekends
+  as equivalent rest will misread the arc.
+- **Day-over-day deltas stop working in the crunch weeks.** Heavy days arrive in runs and
+  recovery saturates near its floor (22% on 2026-09-17), so differencing consecutive days
+  measures noise. To size the morning-after effect, **contrast** mornings after
+  high-fragmentation days against mornings after light ones: `user_101` wakes 52.9% lower
+  after a day with 4+ back-to-back transitions (29.0% vs 61.6%). Note this contrast
+  carries both the acute and chronic terms; the lag-1 correlation is the clean mechanism
+  check.
+
+## `stress_scores.csv` carries its own inputs
+
+The five biometric columns that feed the score sit on the same row as the score, so it
+can be re-derived from that file alone without joining back to `whoop_biometrics.csv`:
+
+```
+person_id, date, hrv_ms, rhr_bpm, sleep_hours, recovery_pct, day_strain,
+stress_score, contributing_factors
+```
+
+```
+stress = (100 - recovery_pct) * 0.55        recovery deficit  (max 55)
+       + (day_strain / 21.0)  * 35          exertion          (max 35)
+       + ((8 - min(sleep_hours, 8)) / 8) * 10   sleep debt     (max 10)
+```
+
+`contributing_factors` names the terms that actually drove the number, largest first.
 
 Part 4 and 5 don't need this detail — they only ever consume `team_structural_summary.json`
 (de-identified) and whatever aggregate/insight output Part 3 produces, never the raw
