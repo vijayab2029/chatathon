@@ -52,8 +52,16 @@ def _sentiment_for(category: str, title: str, rng: random.Random) -> float:
 
 
 def _gen_day_meetings(person_id: str, day: date, rng: random.Random,
-                      intensity: float) -> list[dict]:
-    """Build one workday of meetings. `intensity` scales how packed the day is."""
+                      intensity: float, driver: str) -> list[dict]:
+    """Build one workday of meetings.
+
+    `intensity` scales how packed the day is. `driver` is the person's planted
+    sensitivity: we deliberately vary THAT feature independently of meeting volume,
+    otherwise every feature ends up ~0.8 correlated with meeting_count and the
+    engine cannot distinguish the true driver from sheer volume. Real calendars
+    have this confounding too, but a benchmark that can't separate them tells us
+    nothing about whether the engine works.
+    """
     if day.weekday() >= 5:  # weekend
         n = 1 if rng.random() < 0.08 else 0
     else:
@@ -63,20 +71,51 @@ def _gen_day_meetings(person_id: str, day: date, rng: random.Random,
         n = max(0, int(rng.gauss(3.2 * intensity + bump, 1.4)))
         n = min(n, 9)
 
+    # Per-day dial for the driver feature, independent of n. Bimodal so exposed and
+    # unexposed days are both well populated -- the validator needs >=3 of each.
+    driver_on = rng.random() < 0.38
+
     meetings: list[dict] = []
     cursor = 8 * 60 + rng.choice([0, 30, 60])  # minutes from midnight
     for i in range(n):
-        gap = rng.choice([0, 0, 5, 15, 30, 45, 60, 90])
+        # back_to_back: when it's the driver, force tight gaps on "on" days only
+        if driver == "back_to_back_blocks":
+            gap = rng.choice([0, 0, 5]) if driver_on else rng.choice([30, 45, 60, 90])
+        else:
+            gap = rng.choice([0, 5, 15, 30, 45, 60, 90])
         cursor += gap
         duration = rng.choice([15, 25, 30, 30, 45, 60, 60, 90])
         start, end = cursor, cursor + duration
         cursor = end
-        if start > 20 * 60:
+        if start > 21 * 60:
             break
 
         category = rng.choice(list(TITLES))
         title = rng.choice(TITLES[category])
-        is_after_hours = start < 8 * 60 or end > 18 * 60
+
+        # after_hours: some people genuinely have an evening habit. Previously this
+        # feature fired on 0% of days, making it undiscoverable by construction.
+        if driver == "after_hours_meetings" and driver_on and i == n - 1 and n > 0:
+            start = rng.choice([18 * 60 + 30, 19 * 60, 19 * 60 + 30, 20 * 60])
+            end = start + rng.choice([30, 45, 60])
+        elif rng.random() < 0.06:  # a low background rate for everyone else
+            start = rng.choice([7 * 60, 7 * 60 + 30, 18 * 60 + 30, 19 * 60])
+            end = start + rng.choice([30, 45])
+
+        if driver == "large_meetings":
+            attendees = rng.randint(9, 22) if driver_on else rng.randint(2, 7)
+        else:
+            attendees = max(2, int(rng.gauss(6, 4)))
+
+        if driver == "no_agenda_meetings":
+            has_agenda = rng.random() > (0.85 if driver_on else 0.15)
+        else:
+            has_agenda = rng.random() > 0.42
+
+        if driver == "negative_sentiment_meetings" and driver_on:
+            category = rng.choice(["incident", "review"])
+            title = rng.choice(TITLES[category])
+
         meetings.append({
             "event_id": f"{person_id}-{day.isoformat()}-{i}",
             "person_id": person_id,
@@ -84,10 +123,10 @@ def _gen_day_meetings(person_id: str, day: date, rng: random.Random,
             "start": f"{start // 60:02d}:{start % 60:02d}",
             "end": f"{end // 60:02d}:{end % 60:02d}",
             "title": title,
-            "attendee_count": max(2, int(rng.gauss(6, 4))),
-            "has_agenda": rng.random() > 0.42,
+            "attendee_count": attendees,
+            "has_agenda": has_agenda,
             "is_recurring": category in ("status", "1:1") and rng.random() > 0.25,
-            "is_after_hours": is_after_hours,
+            "is_after_hours": start < 8 * 60 or end > 18 * 60,
             "is_back_to_back": gap <= 5 and i > 0,
             "sentiment": _sentiment_for(category, title, rng),
             "category": category,
@@ -130,7 +169,7 @@ def generate(n_people: int, n_days: int, seed: int) -> tuple[list[dict], list[di
         by_day: dict[date, list[dict]] = {}
         for d in range(n_days):
             day = start_day + timedelta(days=d)
-            m = _gen_day_meetings(person_id, day, rng, intensity)
+            m = _gen_day_meetings(person_id, day, rng, intensity, driver)
             by_day[day] = m
             all_meetings.extend(m)
 
@@ -140,9 +179,9 @@ def generate(n_people: int, n_days: int, seed: int) -> tuple[list[dict], list[di
             snap = _day_feature_snapshot(prev)
 
             # The planted signal: yesterday's driver raises today's stress.
-            effect = strength * min(snap.get(driver, 0.0), 4.0) / 2.0
+            effect = strength * min(snap.get(driver, 0.0), 3.0)
             weekend_relief = -8.0 if day.weekday() >= 5 else 0.0
-            noise = rng.gauss(0, 5.5)
+            noise = rng.gauss(0, 4.0)
             score = baseline + effect + weekend_relief + noise
             score = max(5.0, min(98.0, score))
 
